@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "deploy": "rsync -az --delete dist/ aliyun:/var/www/rm/ && ssh aliyun \"systemctl reload nginx\""
   },
   "dependencies": {
     "antd": "^4",
