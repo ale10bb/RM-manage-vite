@@ -3,7 +3,7 @@ import { Row, Col, Space } from "antd";
 import { message } from "antd";
 import { Table, Descriptions } from "antd";
 import { Form, InputNumber, Button, Select } from "antd";
-import { Tooltip, Tag, Popover, Popconfirm } from "antd";
+import { Badge, Tooltip, Tag, Popover, Popconfirm } from "antd";
 import {
   EditOutlined,
   MailOutlined,
@@ -193,6 +193,19 @@ const ProjectDescription = (props: {
     )}:${String(d.getMinutes()).padStart(2, "0")}`;
   };
 
+  const badgeStatus = (status: 0 | 1 | 2) => {
+    switch (status) {
+      case 0:
+        return "success";
+      case 1:
+        return "warning";
+      case 2:
+        return "error";
+      default:
+        return undefined;
+    }
+  }
+
   // 自管state处理函数
   const [editPageOpen, setEditPageOpen] = useState<boolean>(false);
   const [editPageConfirmLoading, setEditPageConfirmLoading] = useState<boolean>(false);
@@ -356,7 +369,11 @@ const ProjectDescription = (props: {
                       onFinish={(values: any) => handleEditReviewer(props.record.id as string, values.user)}>
                       <Form.Item name="user" rules={[{ required: true, message: "请选择用户" }]}>
                         <Select placeholder="请选择用户" style={{ width: "160px" }}>
-                          {props.user.map((u) => (<Select.Option key={u.id}>{u.name}</Select.Option>))}
+                          {props.user.map((u) => (
+                            <Select.Option key={u.id}>
+                              <Badge status={badgeStatus(u.status)} text={u.name} />
+                            </Select.Option>
+                          ))}
                         </Select>
                       </Form.Item>
                       <Form.Item>

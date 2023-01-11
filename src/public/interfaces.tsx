@@ -1,11 +1,11 @@
 export interface QueueItem {
-    current: number,
     id: string,
     name: string,
+    role: 0 | 1,
+    status: 0 | 1 | 2,
     pages_diff: number,
-    phone: string,
-    role: number,
-    status: number,
+    current: number,
+    skipped: 0 | 1,
 }
 
 export interface ProjectItem {
@@ -17,7 +17,7 @@ export interface ProjectItem {
     start: number,
     end: number,
     page: number,
-    urgent: number
+    urgent: 0 | 1
     company: string,
     names: Map<string, string>,
 }
@@ -25,7 +25,6 @@ export interface ProjectItem {
 export interface UserItem {
     id: string,
     name: string,
-    phone: string,
-    role: number,
-    status: number,
+    role: 0 | 1,
+    status: 0 | 1 | 2,
 }

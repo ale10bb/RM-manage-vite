@@ -29,7 +29,7 @@ const HomeMain = () => {
         message.error(`获取失败(${response.data.err})`);
       }
       else {
-        setQueue(response.data.data.normal);
+        setQueue(response.data.data.queue);
       }
     }).catch(function (error) {
       message.error(`获取失败(${error.message})`);
@@ -152,24 +152,38 @@ const HomeMain = () => {
                       onSelect={(value: number) => handleEditStatus(value, item)}
                     >
                       <Select.Option
-                        disabled
-                        value={-1}
-                        render={<Space><CaretDownOutlined />{item.name}<Tag color="default">跳过</Tag></Space>} >
-                        <Badge status="default" text="跳过一篇（自动）" />
-                      </Select.Option>
-                      <Select.Option
                         value={0}
-                        render={<Space><CaretDownOutlined style={{ color: 'green' }} />{item.name}</Space>}>
+                        render={
+                          <Space>
+                            <CaretDownOutlined style={{ color: 'green' }} />
+                            {item.name}
+                            {item.skipped ? <Tag color="default">跳过一篇</Tag> : undefined}
+                          </Space>
+                        }>
                         <Badge status="success" text="空闲" />
                       </Select.Option>
                       <Select.Option
                         value={1}
-                        render={<Space><CaretDownOutlined style={{ color: 'orange' }} />{item.name}<Tag color="warning">忙碌</Tag></Space>}>
+                        render={
+                          <Space>
+                            <CaretDownOutlined style={{ color: 'orange' }} />
+                            {item.name}
+                            <Tag color="warning">忙碌</Tag>
+                            {item.skipped ? <Tag color="default">跳过一篇</Tag> : undefined}
+                          </Space>
+                        }>
                         <Badge status="warning" text="不审加急" />
                       </Select.Option>
                       <Select.Option
                         value={2}
-                        render={<Space><CaretDownOutlined style={{ color: 'red' }} />{item.name}<Tag color="error">不审</Tag></Space>}>
+                        render={
+                          <Space>
+                            <CaretDownOutlined style={{ color: 'red' }} />
+                            {item.name}
+                            <Tag color="error">不审</Tag>
+                            {item.skipped ? <Tag color="default">跳过一篇</Tag> : undefined}
+                          </Space>
+                        }>
                         <Badge status="error" text="不审报告" />
                       </Select.Option>
                     </Select>
