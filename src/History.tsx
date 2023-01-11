@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Breadcrumb, Row, Col, Space } from "antd";
 import { message } from "antd";
-import { Card, Skeleton } from "antd";
+import { Card, Spin } from "antd";
 import { Form, Input, Button, Collapse } from "antd";
 
 import axios from "axios";
@@ -14,11 +14,11 @@ const HistoryMain = () => {
   const [form] = Form.useForm();
   const [activeKey, setActiveKey] = useState<string | string[]>("1");
   const [tableData, setTableData] = useState<Array<ProjectItem>>([]);
-  const [tableLoading, setTableLoading] = useState<boolean>(false);
+  const [tableLoading, setTableLoading] = useState<boolean>(true);
   // 用户列表（用于选择邮件发送对象），history情况下获取所有有效用户
   const [userData, setUserData] = useState<Array<UserItem>>([]);
 
-  // 启动时加载user的数据
+  // 启动时后台加载user的数据
   useEffect(() => {
     const fetchUser = async () => {
       axios.post(
@@ -41,26 +41,22 @@ const HistoryMain = () => {
   const onSubmit = async () => {
     setActiveKey([]);
     setTableLoading(true);
-
-    axios.post(
-      "/api2/history/search",
-      form.getFieldsValue()
-    ).then((response) => {
+    try {
+      const response = await axios.post("/api2/history/search", form.getFieldsValue())
       if (response.data.result) {
         message.error(`获取失败(${response.data.err})`);
-      }
-      else {
+      } else {
         setTableData(response.data.data.history);
       }
-    }).catch(function (error) {
+    } catch (error: any) {
       message.error(`获取失败(${error.message})`);
-    });
+    };
     setTableLoading(false);
   };
 
   const handleCollapseChange = (key: string | string[]) => {
     setActiveKey(key);
-  }
+  };
 
   return (
     <>
@@ -97,14 +93,14 @@ const HistoryMain = () => {
         </Col>
         <Col span={24}>
           <Card>
-            <Skeleton active loading={tableLoading}>
+            <Spin spinning={tableLoading} delay={500}>
               <ProjectTable
                 type="history"
                 data={tableData}
                 user={userData}
                 onChange={() => { }}
               />
-            </Skeleton>
+            </Spin>
           </Card>
         </Col>
       </Row>

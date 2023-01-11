@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Breadcrumb } from "antd";
 import { message } from "antd";
-import { Card, Skeleton } from "antd";
+import { Card, Spin } from "antd";
 
 import axios from "axios";
 
@@ -10,46 +10,47 @@ import { ProjectItem, UserItem } from "./public/interfaces";
 
 const CurrentMain = () => {
   // 结果表格
+  const [refreshTime, setRefreshTime] = useState<number>(Date.now())
   const [tableData, setTableData] = useState<Array<ProjectItem>>([]);
-  const [tableLoading, setTableLoading] = useState<boolean>(false);
+  const [tableLoading, setTableLoading] = useState<boolean>(true);
   // 用户列表（用于选择邮件发送对象），current情况下获取审核人
   const [userData, setUserData] = useState<Array<UserItem>>([]);
 
   useEffect(() => {
-    fetchCurrent();
     const fetchUser = async () => {
-      axios
-        .post("/api2/user/list", { isReviewer: true })
-        .then((response) => {
-          if (response.data.result) {
-            message.error(`获取失败(${response.data.err})`);
-          } else {
-            setUserData(response.data.data.user);
-          }
-        })
-        .catch(function (error) {
-          message.error(`获取失败(${error.message})`);
-        });
+      axios.post(
+        "/api2/user/list",
+        { isReviewer: true }
+      ).then((response) => {
+        if (response.data.result) {
+          message.error(`获取失败(${response.data.err})`);
+        } else {
+          setUserData(response.data.data.user);
+        }
+      }).catch(function (error) {
+        message.error(`获取失败(${error.message})`);
+      });
     };
     fetchUser();
   }, []);
 
-  const fetchCurrent = () => {
-    setTableLoading(true);
-    axios
-      .post("/api2/current/list", {})
-      .then((response) => {
+  useEffect(() => {
+    const fetchCurrent = async () => {
+      setTableLoading(true);
+      try {
+        const response = await axios.post("/api2/current/list", {})
         if (response.data.result) {
           message.error(`获取失败(${response.data.err})`);
         } else {
           setTableData(response.data.data.current);
         }
-      })
-      .catch(function (error) {
+      } catch (error: any) {
         message.error(`获取失败(${error.message})`);
-      });
-    setTableLoading(false);
-  };
+      };
+      setTableLoading(false);
+    };
+    fetchCurrent();
+  }, [refreshTime]);
 
   return (
     <>
@@ -58,14 +59,14 @@ const CurrentMain = () => {
         <Breadcrumb.Item>当前项目</Breadcrumb.Item>
       </Breadcrumb>
       <Card>
-        <Skeleton active loading={tableLoading}>
+        <Spin spinning={tableLoading} delay={500}>
           <ProjectTable
             type="current"
             data={tableData}
             user={userData}
-            onChange={fetchCurrent}
+            onChange={() => setRefreshTime(Date.now())}
           />
-        </Skeleton>
+        </Spin>
       </Card>
     </>
   );

@@ -27,97 +27,86 @@ const ProjectTable = (props: {
   // 目前仅type="current"的项目可修改或删除，因此限定id为string类型
   // 所有项目均可发送邮件，因此id为string类型(current)或number类型(history)
   const handleEditPage = async (id: string, page: number) => {
-    axios.post(
-      "/api2/current/edit",
-      { id: id, page: page }
-    ).then((response) => {
+    try {
+      const response = await axios.post("/api2/current/edit", { id: id, page: page })
       if (response.data.result) {
         message.error(`修改失败(${response.data.err})`);
-      }
-      else {
+      } else {
         message.success("修改成功");
         props.onChange();
       }
-    }).catch(function (error) {
+    } catch (error: any) {
       message.error(`修改失败(${error.message})`);
-    })
+    };
   };
 
   const handleEditUrgent = async (id: string, urgent: boolean) => {
-    axios.post(
-      "/api2/current/edit",
-      { id: id, urgent: urgent }
-    ).then((response) => {
+    try {
+      const response = await axios.post("/api2/current/edit", { id: id, urgent: urgent })
       if (response.data.result) {
         message.error(`修改失败(${response.data.err})`);
-      }
-      else {
+      } else {
         message.success("修改成功");
         props.onChange();
       }
-    }).catch(function (error) {
+    } catch (error: any) {
       message.error(`修改失败(${error.message})`);
-    });
+    };
   };
 
   const handleEditReviewer = async (id: string, user: string) => {
-    axios.post(
-      "/api2/current/edit",
-      { id: id, reviewerID: user }
-    ).then((response) => {
+    try {
+      const response = await axios.post("/api2/current/edit", { id: id, reviewerID: user })
       if (response.data.result) {
         message.error(`修改失败(${response.data.err})`);
-      }
-      else {
+      } else {
         message.success("修改成功");
-        axios.post(
-          "/api/current/resend",
-          { id: id, to: user }
-        ).then((response) => {
+        props.onChange();
+        try {
+          const response = await axios.post("/api/current/resend", { id: id, to: user })
           if (response.data.result) {
             message.error(`邮件发送失败(${response.data.err})`);
           } else {
-            message.success("邮件发送成功");
+            message.success("已加入发送队列");
           }
-        }).catch(function (error) {
+        } catch (error: any) {
           message.error(`邮件发送失败(${error.message})`);
-        });
+        };
       }
-    }).catch(function (error) {
+    } catch (error: any) {
       message.error(`修改失败(${error.message})`);
-    });
+    };
   };
 
   const handleDeleteProject = async (id: string) => {
-    axios.post(
-      "/api2/current/delete",
-      { id: id }
-    ).then((response) => {
+    try {
+      const response = await axios.post("/api2/current/delete", { id: id })
       if (response.data.result) {
         message.error(`删除失败(${response.data.err})`);
-      }
-      else {
+      } else {
         message.success("删除成功");
+        props.onChange();
       }
-    }).catch(function (error) {
+    } catch (error: any) {
       message.error(`删除失败(${error.message})`);
-    });
+    };
   };
 
   const handleSendMail = async (id: number | string, user: string) => {
-    axios.post(
-      typeof id === "string" ? "/api/current/resend" : "/api/history/resend",
-      { id: id, to: user }
-    ).then((response) => {
+    try {
+      const response = await axios.post(
+        typeof id === "string" ? "/api/current/resend" : "/api/history/resend",
+        { id: id, to: user }
+      );
       if (response.data.result) {
         message.error(`邮件发送失败(${response.data.err})`);
-      }
-      else {
+      } else {
         message.success("已加入发送队列");
+        props.onChange();
       }
-    }).catch(function (error) {
+    } catch (error: any) {
       message.error(`邮件发送失败(${error.message})`);
-    });
+    };
   };
 
   return (
@@ -217,39 +206,39 @@ const ProjectDescription = (props: {
   const [sendMailOpen, setSendMailOpen] = useState<boolean>(false);
   const [sendMailConfirmLoading, setSendMailConfirmLoading] = useState<boolean>(false);
 
-  const handleEditPage = async (id: string, page: number) => {
+  const handleEditPage = (id: string, page: number) => {
     setEditPageConfirmLoading(true);
     props.onEditPage(id, page);
     setEditPageConfirmLoading(false);
     setEditPageOpen(false);
   };
 
-  const handleEditUrgent = async (id: string, urgent: boolean) => {
+  const handleEditUrgent = (id: string, urgent: boolean) => {
     setEditUrgentConfirmLoading(true);
     props.onEditUrgent(id, urgent);
     setEditUrgentConfirmLoading(false);
   };
 
-  const handleEditReviewer = async (id: string, user: string) => {
+  const handleEditReviewer = (id: string, user: string) => {
     setEditReviewerConfirmLoading(true);
     props.onEditReviewer(id, user);
     setEditReviewerConfirmLoading(false);
     setEditReviewerOpen(false);
   };
 
-  const handleDeleteProject = async (id: string) => {
+  const handleDeleteProject = (id: string) => {
     setDeleteProjectConfirmLoading(true);
     props.onDeleteProject(id);
     setDeleteProjectConfirmLoading(false);
   };
 
-  const handleResendMail = async (id: number | string, user: string) => {
+  const handleResendMail = (id: number | string, user: string) => {
     setResendMailConfirmLoading(true);
     props.onSendMail(id, user);
     setResendMailConfirmLoading(false);
   };
 
-  const handleSendMail = async (id: number, user: string) => {
+  const handleSendMail = (id: number, user: string) => {
     setSendMailConfirmLoading(true);
     props.onSendMail(id, user);
     setSendMailConfirmLoading(false);
@@ -275,7 +264,7 @@ const ProjectDescription = (props: {
           </Descriptions.Item>
         </Descriptions>
         <Descriptions column={{ lg: 2, md: 2, sm: 2, xs: 1 }}>
-          <Descriptions.Item label="报告页数">
+          <Descriptions.Item label="报告页数" labelStyle={{ margin: "auto" }}>
             <Space>
               {props.record.page}
               {props.type === "current" ? (
@@ -306,7 +295,7 @@ const ProjectDescription = (props: {
               ) : undefined}
             </Space>
           </Descriptions.Item>
-          <Descriptions.Item label="加急审核">
+          <Descriptions.Item label="加急审核" labelStyle={{ margin: "auto" }}>
             <Space>
               {props.record.urgent ? "是" : "否"}
               {props.type === "current" ? (
@@ -347,7 +336,7 @@ const ProjectDescription = (props: {
                 </Tooltip>)}
             </Space>
           </Descriptions.Item>
-          <Descriptions.Item label="项目操作">
+          <Descriptions.Item label="项目操作" labelStyle={{ margin: "auto" }}>
             {props.type === "current" ?
               (<Space wrap>
                 <Popconfirm
