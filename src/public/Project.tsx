@@ -15,13 +15,16 @@ import {
 
 import axios from "axios";
 
+import { TablePaginationConfig } from "antd/es/table";
 import { ProjectItem, UserItem } from "./interfaces";
 
 const ProjectTable = (props: {
   type: "current" | "history";
-  data: Array<ProjectItem>;
+  data: { project: Array<ProjectItem>, total: number };
   user: Array<UserItem>;
-  onChange: () => void;
+  pagination: { current: number | undefined, pageSize: number | undefined },
+  onPageChange?: (current: number | undefined, pageSize: number | undefined) => void | undefined;
+  onDataChange?: () => void | undefined;
 }) => {
 
   // 目前仅type="current"的项目可修改或删除，因此限定id为string类型
@@ -33,7 +36,7 @@ const ProjectTable = (props: {
         message.error(`修改失败(${response.data.err})`);
       } else {
         message.success("修改成功");
-        props.onChange();
+        props.onDataChange ? props.onDataChange() : undefined;
       }
     } catch (error: any) {
       message.error(`修改失败(${error.message})`);
@@ -47,7 +50,7 @@ const ProjectTable = (props: {
         message.error(`修改失败(${response.data.err})`);
       } else {
         message.success("修改成功");
-        props.onChange();
+        props.onDataChange ? props.onDataChange() : undefined;
       }
     } catch (error: any) {
       message.error(`修改失败(${error.message})`);
@@ -61,7 +64,7 @@ const ProjectTable = (props: {
         message.error(`修改失败(${response.data.err})`);
       } else {
         message.success("修改成功");
-        props.onChange();
+        props.onDataChange ? props.onDataChange() : undefined;
         try {
           const response = await axios.post("/api/current/resend", { id: id, to: user })
           if (response.data.result) {
@@ -85,7 +88,7 @@ const ProjectTable = (props: {
         message.error(`删除失败(${response.data.err})`);
       } else {
         message.success("删除成功");
-        props.onChange();
+        props.onDataChange ? props.onDataChange() : undefined;
       }
     } catch (error: any) {
       message.error(`删除失败(${error.message})`);
@@ -102,18 +105,26 @@ const ProjectTable = (props: {
         message.error(`邮件发送失败(${response.data.err})`);
       } else {
         message.success("已加入发送队列");
-        props.onChange();
+        props.onDataChange ? props.onDataChange() : undefined;
       }
     } catch (error: any) {
       message.error(`邮件发送失败(${error.message})`);
     };
   };
 
+  const handleTableChange = (pagination: TablePaginationConfig) => {
+    props.onPageChange ? props.onPageChange(pagination.current, pagination.pageSize) : undefined;
+  };
+
   return (
     <Table
-      dataSource={props.data}
+      dataSource={props.data.project}
       rowKey="id"
-      pagination={{ position: ["bottomCenter"], hideOnSinglePage: true }}
+      pagination={{
+        hideOnSinglePage: true,
+        total: props.data.total,
+        ...props.pagination,
+      }}
       expandable={{
         expandedRowRender: (record) => (
           <ProjectDescription
@@ -129,6 +140,7 @@ const ProjectTable = (props: {
         ),
         expandRowByClick: true,
       }}
+      onChange={handleTableChange}
     >
       <Table.Column
         title="项目名称"
@@ -359,7 +371,7 @@ const ProjectDescription = (props: {
                       <Form.Item name="user" rules={[{ required: true, message: "请选择用户" }]}>
                         <Select placeholder="请选择用户" style={{ width: "160px" }}>
                           {props.user.map((u) => (
-                            <Select.Option key={u.id}>
+                            <Select.Option key={u.id} disabled={props.record.reviewer_id === u.id}>
                               <Badge status={badgeStatus(u.status)} text={u.name} />
                             </Select.Option>
                           ))}

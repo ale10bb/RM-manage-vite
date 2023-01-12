@@ -6,13 +6,19 @@ import { Card, Spin } from "antd";
 import axios from "axios";
 
 import { ProjectTable } from "./public/Project";
-import { ProjectItem, UserItem } from "./public/interfaces";
+import { ProjectItem, UserItem } from "./public/interfaces"
 
 const CurrentMain = () => {
   // 结果表格
   const [refreshTime, setRefreshTime] = useState<number>(Date.now())
-  const [tableData, setTableData] = useState<Array<ProjectItem>>([]);
+  const [tableData, setTableData] = useState<{
+    project: Array<ProjectItem>,
+    total: number,
+  }>({ project: [], total: 0 });
   const [tableLoading, setTableLoading] = useState<boolean>(true);
+  const [currentTableConfig, setCurrentTableConfig] = useState(
+    { current: 1, pageSize: 10 }
+  );
   // 用户列表（用于选择邮件发送对象），current情况下获取审核人
   const [userData, setUserData] = useState<Array<UserItem>>([]);
 
@@ -42,7 +48,10 @@ const CurrentMain = () => {
         if (response.data.result) {
           message.error(`获取失败(${response.data.err})`);
         } else {
-          setTableData(response.data.data.current);
+          setTableData({
+            project: response.data.data.current,
+            total: response.data.data.total,
+          });
         }
       } catch (error: any) {
         message.error(`获取失败(${error.message})`);
@@ -50,7 +59,11 @@ const CurrentMain = () => {
       setTableLoading(false);
     };
     fetchCurrent();
-  }, [refreshTime]);
+  }, [refreshTime, JSON.stringify(currentTableConfig)]);
+
+  const handlePageChange = (current: number | undefined, pageSize: number | undefined) => {
+    setCurrentTableConfig(Object.assign(currentTableConfig, { current: current, pageSize: pageSize }));
+  };
 
   return (
     <>
@@ -64,7 +77,9 @@ const CurrentMain = () => {
             type="current"
             data={tableData}
             user={userData}
-            onChange={() => setRefreshTime(Date.now())}
+            pagination={{ current: currentTableConfig.current, pageSize: currentTableConfig.pageSize }}
+            onPageChange={handlePageChange}
+            onDataChange={() => setRefreshTime(Date.now())}
           />
         </Spin>
       </Card>
