@@ -1,14 +1,16 @@
 import { useState, useEffect } from "react";
-import { Breadcrumb, Row, Col, Space } from "antd";
+import { Breadcrumb, Row, Col, Space, Radio } from "antd";
 import { message, Typography } from "antd";
 import { Card, Spin } from "antd";
 import { Form, Input, Button, Switch } from "antd";
-import { List, Badge, Tag, Progress, Select } from "antd";
-import { LoadingOutlined, MailOutlined, CaretDownOutlined } from "@ant-design/icons";
+import { List, Badge, Tag, Progress, Popover } from "antd";
+import { LoadingOutlined, MailOutlined, MoreOutlined } from "@ant-design/icons";
 
 import axios from "axios";
 
+import type { RadioChangeEvent } from 'antd';
 import { QueueItem } from './public/interfaces'
+import { mapBadgeStatus } from "./public/interfaces";
 
 const HomeMain = () => {
   // Card: 邮件处理
@@ -134,58 +136,31 @@ const HomeMain = () => {
             <Spin spinning={queueListLoading} delay={500}>
               <List
                 dataSource={queue}
-                size="small"
                 rowKey={(item) => item.id}
                 renderItem={(item) => (
                   <List.Item
-                    style={{ padding: "8px 0" }}
                     extra={<Progress percent={item.current * 33} steps={3} showInfo={false} />}
                   >
-                    <Space size={2}>
-                      <Select
-                        defaultValue={item.status}
-                        bordered={false}
-                        style={{ width: "200px" }}
-                        showArrow={false}
-                        optionLabelProp="render"
-                        onSelect={(value: 0 | 1 | 2) => handleEditStatus(item.id, value)}
+                    <Space>
+                      <Badge status={mapBadgeStatus(item.status)} text={item.name} />
+                      <Popover
+                        placement="right"
+                        content={
+                          <Radio.Group
+                            defaultValue={item.status}
+                            onChange={(e: RadioChangeEvent) => handleEditStatus(item.id, e.target.value)}
+                          >
+                            <Space direction="vertical">
+                              <Radio value={0}><Badge status="success" text="空闲" /></Radio>
+                              <Radio value={1}><Badge status="warning" text="不审加急" /></Radio>
+                              <Radio value={2}><Badge status="error" text="不审报告" /></Radio>
+                            </Space>
+                          </Radio.Group>
+                        }
                       >
-                        <Select.Option
-                          value={0}
-                          render={
-                            <Space>
-                              <CaretDownOutlined style={{ color: 'green' }} />
-                              {item.name}
-                              {item.skipped ? <Tag color="default">跳过一篇</Tag> : undefined}
-                            </Space>
-                          }>
-                          <Badge status="success" text="空闲" />
-                        </Select.Option>
-                        <Select.Option
-                          value={1}
-                          render={
-                            <Space>
-                              <CaretDownOutlined style={{ color: 'orange' }} />
-                              {item.name}
-                              <Tag color="warning">忙碌</Tag>
-                              {item.skipped ? <Tag color="default">跳过一篇</Tag> : undefined}
-                            </Space>
-                          }>
-                          <Badge status="warning" text="不审加急" />
-                        </Select.Option>
-                        <Select.Option
-                          value={2}
-                          render={
-                            <Space>
-                              <CaretDownOutlined style={{ color: 'red' }} />
-                              {item.name}
-                              <Tag color="error">不审</Tag>
-                              {item.skipped ? <Tag color="default">跳过一篇</Tag> : undefined}
-                            </Space>
-                          }>
-                          <Badge status="error" text="不审报告" />
-                        </Select.Option>
-                      </Select>
+                        <MoreOutlined />
+                      </Popover>
+                      {item.skipped ? <Tag color="default">跳过一篇</Tag> : undefined}
                     </Space>
                   </List.Item>
                 )}

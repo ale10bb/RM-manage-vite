@@ -3,20 +3,19 @@ import { Row, Col, Space } from "antd";
 import { message } from "antd";
 import { Table, Descriptions } from "antd";
 import { Form, InputNumber, Button, Select } from "antd";
-import { Badge, Tooltip, Tag, Popover, Popconfirm } from "antd";
+import { Badge, Tag, Popover, Popconfirm } from "antd";
 import {
   EditOutlined,
   MailOutlined,
   DeleteOutlined,
   CheckOutlined,
   SwapOutlined,
-  ClockCircleOutlined,
 } from "@ant-design/icons";
 
 import axios from "axios";
 
 import { TablePaginationConfig } from "antd/es/table";
-import { ProjectItem, UserItem } from "./interfaces";
+import { ProjectItem, UserItem, mapBadgeStatus } from "./interfaces";
 
 const ProjectTable = (props: {
   type: "current" | "history";
@@ -121,6 +120,7 @@ const ProjectTable = (props: {
       dataSource={props.data.project}
       rowKey="id"
       pagination={{
+        responsive: true,
         hideOnSinglePage: true,
         total: props.data.total,
         ...props.pagination,
@@ -140,6 +140,7 @@ const ProjectTable = (props: {
         ),
         expandRowByClick: true,
       }}
+      scroll={{ scrollToFirstRowOnChange: true }}
       onChange={handleTableChange}
     >
       <Table.Column
@@ -153,13 +154,13 @@ const ProjectTable = (props: {
         title="委托单位"
         dataIndex="company"
         ellipsis
-        responsive={["sm"]}
+        responsive={["md"]}
       />
       <Table.Column
         title="撰写人"
         dataIndex="author_name"
         width="15%"
-        responsive={["md"]}
+        responsive={["lg"]}
       />
       <Table.Column
         title="审核人"
@@ -193,19 +194,6 @@ const ProjectDescription = (props: {
       "0"
     )}:${String(d.getMinutes()).padStart(2, "0")}`;
   };
-
-  const badgeStatus = (status: 0 | 1 | 2) => {
-    switch (status) {
-      case 0:
-        return "success";
-      case 1:
-        return "warning";
-      case 2:
-        return "error";
-      default:
-        return undefined;
-    }
-  }
 
   // 自管state处理函数
   const [editPageOpen, setEditPageOpen] = useState<boolean>(false);
@@ -258,188 +246,166 @@ const ProjectDescription = (props: {
   };
 
   return (
-    <Row gutter={[80, 8]}>
-      <Col xs={24} sm={24} md={12} lg={12} xl={12}>
-        <Descriptions column={1} labelStyle={{ margin: "auto" }}>
-          <Descriptions.Item label="项目名称" span={2}>
-            <Space direction="vertical">
-              {Object.entries(props.record.names).map(([code, name]) => (
-                <div>
-                  <Tag color="default">{code}</Tag>
-                  {name}
-                </div>
-              ))}
-            </Space>
-          </Descriptions.Item>
-          <Descriptions.Item label="委托单位" span={2}>
-            {props.record.company}
-          </Descriptions.Item>
-        </Descriptions>
-        <Descriptions column={{ lg: 2, md: 2, sm: 2, xs: 1 }}>
-          <Descriptions.Item label="报告页数" labelStyle={{ margin: "auto" }}>
-            <Space>
-              {props.record.page}
-              {props.type === "current" ? (
-                <Popover
-                  title="修改页数"
-                  trigger="click"
-                  open={editPageOpen}
-                  onOpenChange={(open) => setEditPageOpen(open)}
-                  placement="right"
-                  content={
-                    <Form
-                      layout="inline"
-                      onFinish={(values: any) => handleEditPage(props.record.id as string, values.page)}>
-                      <Form.Item initialValue={props.record.page} name="page">
-                        <InputNumber />
-                      </Form.Item>
-                      <Form.Item>
-                        <Button
-                          type="primary"
-                          htmlType="submit"
-                          icon={<CheckOutlined />}
-                          loading={editPageConfirmLoading}
-                        />
-                      </Form.Item>
-                    </Form>}>
-                  <Button icon={<EditOutlined />} size="small" />
-                </Popover>
-              ) : undefined}
-            </Space>
-          </Descriptions.Item>
-          <Descriptions.Item label="加急审核" labelStyle={{ margin: "auto" }}>
-            <Space>
-              {props.record.urgent ? "是" : "否"}
-              {props.type === "current" ? (
-                <Popconfirm
-                  title={`修改为${props.record.urgent ? "非" : ""}加急？`}
-                  okButtonProps={{ loading: editUrgentConfirmLoading }}
-                  onConfirm={() => handleEditUrgent(props.record.id as string, !props.record.urgent)}
-                >
-                  <Button icon={<EditOutlined />} size="small" />
-                </Popconfirm>
-              ) : undefined}
-            </Space>
-          </Descriptions.Item>
-        </Descriptions>
-      </Col>
-      <Col xs={24} sm={24} md={12} lg={12} xl={12}>
-        <Descriptions column={1}>
-          <Descriptions.Item label="提交审核">
-            <Space>
-              {props.record.author_name}
-              <Tooltip
-                title={formatTimestamp(props.record.start)}
-                placement="right"
-              >
-                <ClockCircleOutlined />
-              </Tooltip>
-            </Space>
-          </Descriptions.Item>
-          <Descriptions.Item label={props.type === "current" ? "审核中" : "完成审核"}>
-            <Space>
-              {props.record.reviewer_name}
-              {props.type === "current" ? undefined :
-                (<Tooltip
-                  title={formatTimestamp(props.record.end)}
-                  placement="right"
-                >
-                  <ClockCircleOutlined />
-                </Tooltip>)}
-            </Space>
-          </Descriptions.Item>
-          <Descriptions.Item label="项目操作" labelStyle={{ margin: "auto" }}>
-            {props.type === "current" ?
-              (<Space wrap>
-                <Popconfirm
-                  title={`重发[报告分配审核]至${props.record.reviewer_name}？`}
-                  okText="确认"
-                  cancelText="取消"
-                  okButtonProps={{ loading: resendMailConfirmLoading }}
-                  onConfirm={() => handleResendMail(props.record.id, props.record.reviewer_id)}>
-                  <Button icon={<MailOutlined />} size="small">重发邮件</Button>
-                </Popconfirm>
-                <Popover
-                  title="选择移交对象"
-                  trigger="click"
-                  open={editReviewerOpen}
-                  onOpenChange={(open) => setEditReviewerOpen(open)}
-                  content={
-                    <Form
-                      layout="inline"
-                      onFinish={(values: any) => handleEditReviewer(props.record.id as string, values.user)}>
-                      <Form.Item name="user" rules={[{ required: true, message: "请选择用户" }]}>
-                        <Select placeholder="请选择用户" style={{ width: "160px" }}>
-                          {props.user.map((u) => (
-                            <Select.Option key={u.id} disabled={props.record.reviewer_id === u.id}>
-                              <Badge status={badgeStatus(u.status)} text={u.name} />
-                            </Select.Option>
-                          ))}
-                        </Select>
-                      </Form.Item>
-                      <Form.Item>
-                        <Button
-                          type="primary"
-                          htmlType="submit"
-                          loading={editReviewerConfirmLoading}
-                          icon={<CheckOutlined />}
-                        />
-                      </Form.Item>
-                    </Form>
-                  }
-                >
-                  <Button icon={<SwapOutlined />} size="small">移交审核</Button>
-                </Popover>
-                <Popconfirm
-                  title={`删除项目？`}
-                  okText="确认"
-                  cancelText="取消"
-                  okButtonProps={{ loading: deleteProjectConfirmLoading }}
-                  onConfirm={() => handleDeleteProject(props.record.id as string)}>
-                  <Button icon={<DeleteOutlined />} size="small">删除项目</Button>
-                </Popconfirm>
-              </Space>) :
-              (<Space wrap>
-                <Popconfirm
-                  title={`重发[报告完成审核]至${props.record.author_name}？`}
-                  okText="确认"
-                  cancelText="取消"
-                  okButtonProps={{ loading: resendMailConfirmLoading }}
-                  onConfirm={() => handleResendMail(props.record.id, props.record.author_id)}>
-                  <Button icon={<MailOutlined />} size="small">重发邮件</Button>
-                </Popconfirm>
-                <Popover
-                  title="选择发送对象"
-                  trigger="click"
-                  open={sendMailOpen}
-                  onOpenChange={(open) => setSendMailOpen(open)}
-                  content={
-                    <Form
-                      layout="inline"
-                      onFinish={(values: any) => handleSendMail(props.record.id as number, values.user)}>
-                      <Form.Item name="user" rules={[{ required: true, message: "请选择用户" }]}>
-                        <Select placeholder="请选择用户" style={{ width: "160px" }}>
-                          {props.user.map((u) => (<Select.Option key={u.id}>{u.name}</Select.Option>))}
-                        </Select>
-                      </Form.Item>
-                      <Form.Item>
-                        <Button
-                          type="primary"
-                          htmlType="submit"
-                          loading={sendMailConfirmLoading}
-                          icon={<CheckOutlined />}
-                        />
-                      </Form.Item>
-                    </Form>
-                  }
-                >
-                  <Button icon={<MailOutlined />} size="small">获取报告</Button>
-                </Popover>
-              </Space>)}
-          </Descriptions.Item>
-        </Descriptions>
-      </Col>
-    </Row >
+    <Descriptions
+      size="middle"
+      column={{ xxl: 4, xl: 4, lg: 2, md: 2, sm: 1, xs: 1 }}
+      labelStyle={{ margin: "auto" }}>
+      <Descriptions.Item label="项目名称" span={2}>
+        <Space direction="vertical">
+          {Object.entries(props.record.names).map(([code, name]) => (
+            <div>
+              <Tag color="default">{code}</Tag>
+              {name}
+            </div>
+          ))}
+        </Space>
+      </Descriptions.Item>
+      <Descriptions.Item label="委托单位" span={2}>
+        {props.record.company}
+      </Descriptions.Item>
+      <Descriptions.Item label="报告页数" labelStyle={{ margin: "auto" }}>
+        <Space>
+          {props.record.page}
+          {props.type === "current" ? (
+            <Popover
+              title="修改页数"
+              trigger="click"
+              open={editPageOpen}
+              onOpenChange={(open) => setEditPageOpen(open)}
+              placement="right"
+              content={
+                <Form
+                  layout="inline"
+                  onFinish={(values: any) => handleEditPage(props.record.id as string, values.page)}>
+                  <Form.Item initialValue={props.record.page} name="page">
+                    <InputNumber />
+                  </Form.Item>
+                  <Form.Item>
+                    <Button
+                      type="primary"
+                      htmlType="submit"
+                      icon={<CheckOutlined />}
+                      loading={editPageConfirmLoading}
+                    />
+                  </Form.Item>
+                </Form>}>
+              <Button icon={<EditOutlined />} size="small" />
+            </Popover>
+          ) : undefined}
+        </Space>
+      </Descriptions.Item>
+      <Descriptions.Item label="加急审核" labelStyle={{ margin: "auto" }}>
+        <Space>
+          {props.record.urgent ? "是" : "否"}
+          {props.type === "current" ? (
+            <Popconfirm
+              title={`修改为${props.record.urgent ? "非" : ""}加急？`}
+              okButtonProps={{ loading: editUrgentConfirmLoading }}
+              onConfirm={() => handleEditUrgent(props.record.id as string, !props.record.urgent)}
+            >
+              <Button icon={<EditOutlined />} size="small" />
+            </Popconfirm>
+          ) : undefined}
+        </Space>
+      </Descriptions.Item>
+      <Descriptions.Item label="提交审核">
+        {`${props.record.author_name} / ${formatTimestamp(props.record.start)}`}
+      </Descriptions.Item>
+      <Descriptions.Item label={props.type === "current" ? "审核中" : "完成审核"}>
+        {props.record.reviewer_name}
+        {props.type === "current" ? undefined : ` / ${formatTimestamp(props.record.end)}`}
+      </Descriptions.Item>
+      <Descriptions.Item label="项目操作" labelStyle={{ margin: "auto" }}>
+        {props.type === "current" ?
+          (<Space wrap>
+            <Popconfirm
+              title={`重发[报告分配审核]至${props.record.reviewer_name}？`}
+              okText="确认"
+              cancelText="取消"
+              okButtonProps={{ loading: resendMailConfirmLoading }}
+              onConfirm={() => handleResendMail(props.record.id, props.record.reviewer_id)}>
+              <Button icon={<MailOutlined />} size="small">重发邮件</Button>
+            </Popconfirm>
+            <Popover
+              title="选择移交对象"
+              trigger="click"
+              open={editReviewerOpen}
+              onOpenChange={(open) => setEditReviewerOpen(open)}
+              content={
+                <Form
+                  layout="inline"
+                  onFinish={(values: any) => handleEditReviewer(props.record.id as string, values.user)}>
+                  <Form.Item name="user" rules={[{ required: true, message: "请选择用户" }]}>
+                    <Select placeholder="请选择用户">
+                      {props.user.map((u) => (
+                        (u.id !== props.record.reviewer_id && u.id !== props.record.author_id) ?
+                          (<Select.Option key={u.id}>
+                            <Badge status={mapBadgeStatus(u.status)} text={u.name} />
+                          </Select.Option>) : undefined
+                      ))}
+                    </Select>
+                  </Form.Item>
+                  <Form.Item>
+                    <Button
+                      type="primary"
+                      htmlType="submit"
+                      loading={editReviewerConfirmLoading}
+                      icon={<CheckOutlined />}
+                    />
+                  </Form.Item>
+                </Form>
+              }
+            >
+              <Button icon={<SwapOutlined />} size="small">移交审核</Button>
+            </Popover>
+            <Popconfirm
+              title={`删除项目？`}
+              okText="确认"
+              cancelText="取消"
+              okButtonProps={{ loading: deleteProjectConfirmLoading }}
+              onConfirm={() => handleDeleteProject(props.record.id as string)}>
+              <Button icon={<DeleteOutlined />} size="small">删除项目</Button>
+            </Popconfirm>
+          </Space>) :
+          (<Space wrap>
+            <Popconfirm
+              title={`重发[报告完成审核]至${props.record.author_name}？`}
+              okText="确认"
+              cancelText="取消"
+              okButtonProps={{ loading: resendMailConfirmLoading }}
+              onConfirm={() => handleResendMail(props.record.id, props.record.author_id)}>
+              <Button icon={<MailOutlined />} size="small">重发邮件</Button>
+            </Popconfirm>
+            <Popover
+              title="选择发送对象"
+              trigger="click"
+              open={sendMailOpen}
+              onOpenChange={(open) => setSendMailOpen(open)}
+              content={
+                <Form
+                  layout="inline"
+                  onFinish={(values: any) => handleSendMail(props.record.id as number, values.user)}>
+                  <Form.Item name="user" rules={[{ required: true, message: "请选择用户" }]}>
+                    <Select placeholder="请选择用户">
+                      {props.user.map((u) => (<Select.Option key={u.id}>{u.name}</Select.Option>))}
+                    </Select>
+                  </Form.Item>
+                  <Form.Item>
+                    <Button
+                      type="primary"
+                      htmlType="submit"
+                      loading={sendMailConfirmLoading}
+                      icon={<CheckOutlined />}
+                    />
+                  </Form.Item>
+                </Form>
+              }
+            >
+              <Button icon={<MailOutlined />} size="small">获取报告</Button>
+            </Popover>
+          </Space>)}
+      </Descriptions.Item>
+    </Descriptions>
   )
 }
 
