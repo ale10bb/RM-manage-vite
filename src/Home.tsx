@@ -47,7 +47,7 @@ const HomeMain = () => {
       if (response.data.result) {
         message.error(`执行失败(${response.data.err})`);
       } else {
-        setQueue(response.data.data.queue);
+        message.success("已加入执行队列");
       }
     } catch (error: any) {
       message.error(`执行失败(${error.message})`);
