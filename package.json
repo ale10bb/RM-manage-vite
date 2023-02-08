@@ -1,13 +1,12 @@
 {
   "name": "rm-manage-vite",
   "private": true,
-  "version": "0.0.0",
+  "version": "2.1.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "preview": "vite preview",
-    "deploy": "rsync -az --delete dist/ aliyun:/var/www/rm/ && ssh aliyun \"systemctl reload nginx\""
+    "preview": "vite preview"
   },
   "dependencies": {
     "antd": "^4",
