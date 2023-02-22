@@ -72,7 +72,7 @@ const CurrentMain = () => {
         <Breadcrumb.Item>当前项目</Breadcrumb.Item>
       </Breadcrumb>
       <Card>
-        <Spin spinning={tableLoading} delay={500}>
+        <Spin spinning={tableLoading}>
           <ProjectTable
             type="current"
             data={tableData}

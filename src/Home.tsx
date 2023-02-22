@@ -133,7 +133,7 @@ const HomeMain = () => {
         </Col>
         <Col xs={24} sm={24} md={12} lg={12} xl={12}>
           <Card title="分配队列">
-            <Spin spinning={queueListLoading} delay={500}>
+            <Spin spinning={queueListLoading}>
               <List
                 dataSource={queue}
                 rowKey={(item) => item.id}

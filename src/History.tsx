@@ -120,7 +120,7 @@ const HistoryMain = () => {
         </Form>
       </Card>
       <Card>
-        <Spin spinning={tableLoading} delay={500}>
+        <Spin spinning={tableLoading}>
           <ProjectTable
             type="history"
             data={tableData}
