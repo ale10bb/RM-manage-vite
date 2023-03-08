@@ -25,7 +25,7 @@ const CurrentMain = () => {
   useEffect(() => {
     const fetchUser = async () => {
       axios.post(
-        "/api2/user/list",
+        "/api/user/list",
         { isReviewer: true }
       ).then((response) => {
         if (response.data.result) {
@@ -44,7 +44,7 @@ const CurrentMain = () => {
     const fetchCurrent = async () => {
       setTableLoading(true);
       try {
-        const response = await axios.post("/api2/current/list", {})
+        const response = await axios.post("/api/current/list", {})
         if (response.data.result) {
           message.error(`获取失败(${response.data.err})`);
         } else {

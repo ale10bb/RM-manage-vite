@@ -30,7 +30,7 @@ const ProjectTable = (props: {
   // 所有项目均可发送邮件，因此id为string类型(current)或number类型(history)
   const handleEditPage = async (id: string, page: number) => {
     try {
-      const response = await axios.post("/api2/current/edit", { id: id, page: page })
+      const response = await axios.post("/api/current/edit", { id: id, page: page })
       if (response.data.result) {
         message.error(`修改失败(${response.data.err})`);
       } else {
@@ -44,7 +44,7 @@ const ProjectTable = (props: {
 
   const handleEditUrgent = async (id: string, urgent: boolean) => {
     try {
-      const response = await axios.post("/api2/current/edit", { id: id, urgent: urgent })
+      const response = await axios.post("/api/current/edit", { id: id, urgent: urgent })
       if (response.data.result) {
         message.error(`修改失败(${response.data.err})`);
       } else {
@@ -58,7 +58,7 @@ const ProjectTable = (props: {
 
   const handleEditReviewer = async (id: string, user: string) => {
     try {
-      const response = await axios.post("/api2/current/edit", { id: id, reviewerID: user })
+      const response = await axios.post("/api/current/edit", { id: id, reviewerID: user })
       if (response.data.result) {
         message.error(`修改失败(${response.data.err})`);
       } else {
@@ -82,7 +82,7 @@ const ProjectTable = (props: {
 
   const handleDeleteProject = async (id: string) => {
     try {
-      const response = await axios.post("/api2/current/delete", { id: id })
+      const response = await axios.post("/api/current/delete", { id: id })
       if (response.data.result) {
         message.error(`删除失败(${response.data.err})`);
       } else {

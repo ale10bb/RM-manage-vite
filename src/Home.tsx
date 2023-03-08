@@ -26,7 +26,7 @@ const HomeMain = () => {
     const fetchQueue = async () => {
       setQueueListLoading(true);
       try {
-        const response = await axios.post("/api2/queue/list", {})
+        const response = await axios.post("/api/queue/list", {})
         if (response.data.result) {
           message.error(`获取失败(${response.data.err})`);
         } else {
@@ -62,7 +62,7 @@ const HomeMain = () => {
 
   const handleEditStatus = async (id: string, value: 0 | 1 | 2) => {
     try {
-      const response = await axios.post("/api2/user/status", { id: id, status: value })
+      const response = await axios.post("/api/user/status", { id: id, status: value })
       if (response.data.result) {
         message.error(`设置失败(${response.data.err})`);
       } else {

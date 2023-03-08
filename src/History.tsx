@@ -26,7 +26,7 @@ const HistoryMain = () => {
   useEffect(() => {
     const fetchUser = async () => {
       axios.post(
-        "/api2/user/list",
+        "/api/user/list",
         { isReviewer: false }
       ).then((response) => {
         if (response.data.result) {
@@ -46,7 +46,7 @@ const HistoryMain = () => {
     const fetchHistory = async () => {
       setTableLoading(true);
       try {
-        const response = await axios.post("/api2/history/search", historyTableConfig)
+        const response = await axios.post("/api/history/search", historyTableConfig)
         if (response.data.result) {
           message.error(`获取失败(${response.data.err})`);
         } else {
