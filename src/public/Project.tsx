@@ -12,7 +12,7 @@ import {
   SwapOutlined,
 } from "@ant-design/icons";
 
-import axios from "axios";
+import axios from "./axios-config";
 
 import { TablePaginationConfig } from "antd/es/table";
 import { ProjectItem, UserItem, mapBadgeStatus } from "./interfaces";

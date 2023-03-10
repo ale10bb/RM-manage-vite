@@ -6,7 +6,7 @@ import { Form, Input, Button, Switch } from "antd";
 import { List, Badge, Tag, Progress, Popover } from "antd";
 import { LoadingOutlined, MailOutlined, MoreOutlined } from "@ant-design/icons";
 
-import axios from "axios";
+import axios from "./public/axios-config";
 
 import type { RadioChangeEvent } from 'antd';
 import { QueueItem } from './public/interfaces'

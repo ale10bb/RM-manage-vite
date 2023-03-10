@@ -4,7 +4,7 @@ import { message } from "antd";
 import { Card, Spin } from "antd";
 import { Form, Input, Button } from "antd";
 
-import axios from "axios";
+import axios from "./public/axios-config";
 
 import { ProjectTable } from "./public/Project";
 import { ProjectItem, UserItem, HistoryTableConfig } from "./public/interfaces"
