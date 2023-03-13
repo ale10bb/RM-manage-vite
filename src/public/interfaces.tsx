@@ -31,3 +31,7 @@ export interface HistoryTableConfig {
   current: number;
   pageSize: number;
 }
+
+export interface MyToken {
+  sub: string;
+}

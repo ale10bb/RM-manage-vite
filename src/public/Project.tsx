@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import jwt_decode from "jwt-decode";
 
 import { Button } from "antd";
 import { Space } from "antd";
@@ -16,7 +17,7 @@ import {
 import { TablePaginationConfig } from "antd/es/table";
 
 import axios from "./axios-config";
-import { ProjectItem, UserItem } from "./interfaces";
+import { ProjectItem, UserItem, MyToken } from "./interfaces";
 
 const ProjectList = (props: {
   type: "current" | "history";
@@ -28,7 +29,8 @@ const ProjectList = (props: {
   ) => void | undefined;
   onDataChange?: () => void | undefined;
 }) => {
-  const user_id = sessionStorage.getItem("user_id");
+  const token = sessionStorage.getItem("token");
+  const user_id = token ? jwt_decode<MyToken>(token).sub : "";
   // 用户列表（用于选择邮件发送对象）
   const [userData, setUserData] = useState<Array<UserItem>>([]);
   useEffect(() => {

@@ -105,14 +105,12 @@ const Manage = () => {
 
   useEffect(() => {
     const fetchUserInfo = async () => {
-      sessionStorage.setItem("user_id", "");
       try {
         const response = await axios.post("/api/user/info", {});
         if (response.data.result) {
           message.error(`获取失败(${response.data.err})`);
         } else {
           setUserInfo(response.data.data.user);
-          sessionStorage.setItem("user_id", response.data.data.user.id);
         }
       } catch (error: any) {
         message.error(`获取失败(${error.message})`);
