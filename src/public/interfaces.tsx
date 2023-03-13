@@ -1,13 +1,3 @@
-export interface QueueItem {
-  id: string;
-  name: string;
-  role: 0 | 1;
-  status: 0 | 1 | 2;
-  pages_diff: number;
-  current: number;
-  skipped: 0 | 1;
-}
-
 export interface ProjectItem {
   id: string | number;
   author_id: string;
@@ -23,10 +13,14 @@ export interface ProjectItem {
 }
 
 export interface UserItem {
-  id: string;
-  name: string;
-  role: 0 | 1;
-  status: 0 | 1 | 2;
+  id: string | undefined;
+  name: string | undefined;
+  role: 0 | 1 | undefined;
+  status: 0 | 1 | 2 | undefined;
+  pages_diff: number | undefined;
+  current: number | undefined;
+  skipped: number | undefined;
+  priority: number | undefined;
 }
 
 export interface HistoryTableConfig {
@@ -37,16 +31,3 @@ export interface HistoryTableConfig {
   current: number;
   pageSize: number;
 }
-
-export const mapBadgeStatus = (status: 0 | 1 | 2) => {
-  switch (status) {
-    case 0:
-      return "success";
-    case 1:
-      return "warning";
-    case 2:
-      return "error";
-    default:
-      return undefined;
-  }
-};

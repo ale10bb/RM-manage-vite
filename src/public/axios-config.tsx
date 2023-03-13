@@ -1,7 +1,7 @@
 import axios from "axios";
 
 axios.defaults.baseURL = import.meta.env.VITE_API_DOMAIN;
-axios.defaults.headers.post['Content-Type'] = 'application/json'
+axios.defaults.headers.post["Content-Type"] = "application/json";
 axios.interceptors.request.use(
   (config) => {
     const token = sessionStorage.getItem("token");
@@ -19,9 +19,13 @@ axios.interceptors.response.use(
     return response;
   },
   function (error) {
-    console.log(error)
-    if (error.response.status === 401 || error.response.status === 422) {
+    console.log(error);
+    if (
+      import.meta.env.PROD &&
+      (error.response.status === 401 || error.response.status === 422)
+    ) {
       sessionStorage.removeItem("token");
+      sessionStorage.setItem("user", "");
       window.location.replace("/auth");
     }
     return Promise.reject(error);

@@ -1,9 +1,11 @@
-import { useState } from "react";
-import { Row, Col, Space } from "antd";
+import { useState, useEffect } from "react";
+
+import { Button } from "antd";
+import { Space } from "antd";
+import { Form, InputNumber, Select } from "antd";
 import { message } from "antd";
-import { Table, Descriptions } from "antd";
-import { Form, InputNumber, Button, Select } from "antd";
-import { Badge, Tag, Popover, Popconfirm } from "antd";
+import { Badge, Collapse, Descriptions, List, Popover, Table, Tag } from "antd";
+import { Popconfirm } from "antd";
 import {
   EditOutlined,
   MailOutlined,
@@ -11,26 +13,52 @@ import {
   CheckOutlined,
   SwapOutlined,
 } from "@ant-design/icons";
+import { TablePaginationConfig } from "antd/es/table";
 
 import axios from "./axios-config";
+import { ProjectItem, UserItem } from "./interfaces";
 
-import { TablePaginationConfig } from "antd/es/table";
-import { ProjectItem, UserItem, mapBadgeStatus } from "./interfaces";
-
-const ProjectTable = (props: {
+const ProjectList = (props: {
   type: "current" | "history";
-  data: { project: Array<ProjectItem>, total: number };
-  user: Array<UserItem>;
-  pagination: { current: number | undefined, pageSize: number | undefined },
-  onPageChange?: (current: number | undefined, pageSize: number | undefined) => void | undefined;
+  data: { project: Array<ProjectItem>; total: number };
+  pagination: { current: number | undefined; pageSize: number | undefined };
+  onPageChange?: (
+    current: number | undefined,
+    pageSize: number | undefined
+  ) => void | undefined;
   onDataChange?: () => void | undefined;
 }) => {
+  const user_id = sessionStorage.getItem("user_id");
+  // 用户列表（用于选择邮件发送对象）
+  const [userData, setUserData] = useState<Array<UserItem>>([]);
+  useEffect(() => {
+    const fetchUser = async () => {
+      axios
+        .post("/api/user/list", {
+          isReviewer: props.type === "current" ? true : false,
+        })
+        .then((response) => {
+          if (response.data.result) {
+            message.error(`获取失败(${response.data.err})`);
+          } else {
+            setUserData(response.data.data.user);
+          }
+        })
+        .catch(function (error) {
+          message.error(`获取失败(${error.message})`);
+        });
+    };
+    fetchUser();
+  }, []);
 
   // 目前仅type="current"的项目可修改或删除，因此限定id为string类型
   // 所有项目均可发送邮件，因此id为string类型(current)或number类型(history)
   const handleEditPage = async (id: string, page: number) => {
     try {
-      const response = await axios.post("/api/current/edit", { id: id, page: page })
+      const response = await axios.post("/api/current/edit", {
+        id: id,
+        page: page,
+      });
       if (response.data.result) {
         message.error(`修改失败(${response.data.err})`);
       } else {
@@ -39,12 +67,15 @@ const ProjectTable = (props: {
       }
     } catch (error: any) {
       message.error(`修改失败(${error.message})`);
-    };
+    }
   };
 
   const handleEditUrgent = async (id: string, urgent: boolean) => {
     try {
-      const response = await axios.post("/api/current/edit", { id: id, urgent: urgent })
+      const response = await axios.post("/api/current/edit", {
+        id: id,
+        urgent: urgent,
+      });
       if (response.data.result) {
         message.error(`修改失败(${response.data.err})`);
       } else {
@@ -53,19 +84,25 @@ const ProjectTable = (props: {
       }
     } catch (error: any) {
       message.error(`修改失败(${error.message})`);
-    };
+    }
   };
 
   const handleEditReviewer = async (id: string, user: string) => {
     try {
-      const response = await axios.post("/api/current/edit", { id: id, reviewerID: user })
+      const response = await axios.post("/api/current/edit", {
+        id: id,
+        reviewerID: user,
+      });
       if (response.data.result) {
         message.error(`修改失败(${response.data.err})`);
       } else {
         message.success("修改成功");
         props.onDataChange ? props.onDataChange() : undefined;
         try {
-          const response = await axios.post("/api/current/resend", { id: id, to: user })
+          const response = await axios.post("/api/current/resend", {
+            id: id,
+            to: user,
+          });
           if (response.data.result) {
             message.error(`邮件发送失败(${response.data.err})`);
           } else {
@@ -73,16 +110,16 @@ const ProjectTable = (props: {
           }
         } catch (error: any) {
           message.error(`邮件发送失败(${error.message})`);
-        };
+        }
       }
     } catch (error: any) {
       message.error(`修改失败(${error.message})`);
-    };
+    }
   };
 
   const handleDeleteProject = async (id: string) => {
     try {
-      const response = await axios.post("/api/current/delete", { id: id })
+      const response = await axios.post("/api/current/delete", { id: id });
       if (response.data.result) {
         message.error(`删除失败(${response.data.err})`);
       } else {
@@ -91,7 +128,7 @@ const ProjectTable = (props: {
       }
     } catch (error: any) {
       message.error(`删除失败(${error.message})`);
-    };
+    }
   };
 
   const handleSendMail = async (id: number | string, user: string) => {
@@ -108,11 +145,192 @@ const ProjectTable = (props: {
       }
     } catch (error: any) {
       message.error(`邮件发送失败(${error.message})`);
-    };
+    }
   };
 
   const handleTableChange = (pagination: TablePaginationConfig) => {
-    props.onPageChange ? props.onPageChange(pagination.current, pagination.pageSize) : undefined;
+    props.onPageChange
+      ? props.onPageChange(pagination.current, pagination.pageSize)
+      : undefined;
+  };
+
+  return (
+    <List
+      dataSource={props.data.project}
+      renderItem={(item) => (
+        <List.Item key={item.id}>
+          <List.Item.Meta
+            title={Array.from(new Set(Object.values(item.names))).join("、")}
+            description={
+              <Space>
+                {item.author_id === user_id
+                  ? "已提交审核"
+                  : `撰写人：${item.author_name}`}
+                {"|"}
+                <Badge
+                  status="processing"
+                  text={`审核中${
+                    item.reviewer_id === user_id
+                      ? ""
+                      : `：${item.reviewer_name}`
+                  }`}
+                />
+              </Space>
+            }
+          />
+          <Collapse ghost expandIconPosition="start">
+            <Collapse.Panel header={<a>详情</a>} key={item.id}>
+              <ProjectDescription
+                type={props.type}
+                record={item}
+                users={userData}
+                onEditPage={handleEditPage}
+                onEditUrgent={handleEditUrgent}
+                onEditReviewer={handleEditReviewer}
+                onDeleteProject={handleDeleteProject}
+                onSendMail={handleSendMail}
+              />
+            </Collapse.Panel>
+          </Collapse>
+        </List.Item>
+      )}
+    />
+  );
+};
+
+const ProjectTable = (props: {
+  type: "current" | "history";
+  data: { project: Array<ProjectItem>; total: number };
+  pagination: { current: number | undefined; pageSize: number | undefined };
+  onPageChange?: (
+    current: number | undefined,
+    pageSize: number | undefined
+  ) => void | undefined;
+  onDataChange?: () => void | undefined;
+}) => {
+  // 用户列表（用于选择邮件发送对象）
+  const [userData, setUserData] = useState<Array<UserItem>>([]);
+  useEffect(() => {
+    const fetchUser = async () => {
+      axios
+        .post("/api/user/list", {
+          isReviewer: props.type === "current" ? true : false,
+        })
+        .then((response) => {
+          if (response.data.result) {
+            message.error(`获取失败(${response.data.err})`);
+          } else {
+            setUserData(response.data.data.user);
+          }
+        })
+        .catch(function (error) {
+          message.error(`获取失败(${error.message})`);
+        });
+    };
+    fetchUser();
+  }, []);
+
+  // 目前仅type="current"的项目可修改或删除，因此限定id为string类型
+  // 所有项目均可发送邮件，因此id为string类型(current)或number类型(history)
+  const handleEditPage = async (id: string, page: number) => {
+    try {
+      const response = await axios.post("/api/current/edit", {
+        id: id,
+        page: page,
+      });
+      if (response.data.result) {
+        message.error(`修改失败(${response.data.err})`);
+      } else {
+        message.success("修改成功");
+        props.onDataChange ? props.onDataChange() : undefined;
+      }
+    } catch (error: any) {
+      message.error(`修改失败(${error.message})`);
+    }
+  };
+
+  const handleEditUrgent = async (id: string, urgent: boolean) => {
+    try {
+      const response = await axios.post("/api/current/edit", {
+        id: id,
+        urgent: urgent,
+      });
+      if (response.data.result) {
+        message.error(`修改失败(${response.data.err})`);
+      } else {
+        message.success("修改成功");
+        props.onDataChange ? props.onDataChange() : undefined;
+      }
+    } catch (error: any) {
+      message.error(`修改失败(${error.message})`);
+    }
+  };
+
+  const handleEditReviewer = async (id: string, user: string) => {
+    try {
+      const response = await axios.post("/api/current/edit", {
+        id: id,
+        reviewerID: user,
+      });
+      if (response.data.result) {
+        message.error(`修改失败(${response.data.err})`);
+      } else {
+        message.success("修改成功");
+        props.onDataChange ? props.onDataChange() : undefined;
+        try {
+          const response = await axios.post("/api/current/resend", {
+            id: id,
+            to: user,
+          });
+          if (response.data.result) {
+            message.error(`邮件发送失败(${response.data.err})`);
+          } else {
+            message.success("已加入发送队列");
+          }
+        } catch (error: any) {
+          message.error(`邮件发送失败(${error.message})`);
+        }
+      }
+    } catch (error: any) {
+      message.error(`修改失败(${error.message})`);
+    }
+  };
+
+  const handleDeleteProject = async (id: string) => {
+    try {
+      const response = await axios.post("/api/current/delete", { id: id });
+      if (response.data.result) {
+        message.error(`删除失败(${response.data.err})`);
+      } else {
+        message.success("删除成功");
+        props.onDataChange ? props.onDataChange() : undefined;
+      }
+    } catch (error: any) {
+      message.error(`删除失败(${error.message})`);
+    }
+  };
+
+  const handleSendMail = async (id: number | string, user: string) => {
+    try {
+      const response = await axios.post(
+        typeof id === "string" ? "/api/current/resend" : "/api/history/resend",
+        { id: id, to: user }
+      );
+      if (response.data.result) {
+        message.error(`邮件发送失败(${response.data.err})`);
+      } else {
+        message.success("已加入发送队列");
+        props.onDataChange ? props.onDataChange() : undefined;
+      }
+    } catch (error: any) {
+      message.error(`邮件发送失败(${error.message})`);
+    }
+  };
+
+  const handleTableChange = (pagination: TablePaginationConfig) => {
+    props.onPageChange
+      ? props.onPageChange(pagination.current, pagination.pageSize)
+      : undefined;
   };
 
   return (
@@ -130,7 +348,7 @@ const ProjectTable = (props: {
           <ProjectDescription
             type={props.type}
             record={record}
-            user={props.user}
+            users={userData}
             onEditPage={handleEditPage}
             onEditUrgent={handleEditUrgent}
             onEditReviewer={handleEditReviewer}
@@ -148,7 +366,8 @@ const ProjectTable = (props: {
         dataIndex="names"
         ellipsis
         render={(names: Map<string, string>) =>
-          Array.from(new Set(Object.values(names))).join("、")}
+          Array.from(new Set(Object.values(names))).join("、")
+        }
       />
       <Table.Column
         title="委托单位"
@@ -175,14 +394,13 @@ const ProjectTable = (props: {
 const ProjectDescription = (props: {
   type: "current" | "history";
   record: ProjectItem;
-  user: Array<UserItem>;
+  users: Array<UserItem>;
   onEditPage: (id: string, page: number) => void;
   onEditUrgent: (id: string, urgent: boolean) => void;
   onEditReviewer: (id: string, user: string) => void;
   onDeleteProject: (id: string) => void;
   onSendMail: (id: number | string, user: string) => void;
 }) => {
-
   // 时间戳格式化
   const formatTimestamp = (unix_timestamp: number) => {
     const d = new Date(unix_timestamp * 1000);
@@ -195,16 +413,35 @@ const ProjectDescription = (props: {
     )}:${String(d.getMinutes()).padStart(2, "0")}`;
   };
 
+  const mapBadgeStatus = (status: 0 | 1 | 2 | undefined) => {
+    switch (status) {
+      case 0:
+        return "success";
+      case 1:
+        return "warning";
+      case 2:
+        return "error";
+      default:
+        return undefined;
+    }
+  };
+
   // 自管state处理函数
   const [editPageOpen, setEditPageOpen] = useState<boolean>(false);
-  const [editPageConfirmLoading, setEditPageConfirmLoading] = useState<boolean>(false);
-  const [editUrgentConfirmLoading, setEditUrgentConfirmLoading] = useState<boolean>(false);
+  const [editPageConfirmLoading, setEditPageConfirmLoading] =
+    useState<boolean>(false);
+  const [editUrgentConfirmLoading, setEditUrgentConfirmLoading] =
+    useState<boolean>(false);
   const [editReviewerOpen, setEditReviewerOpen] = useState<boolean>(false);
-  const [editReviewerConfirmLoading, setEditReviewerConfirmLoading] = useState<boolean>(false);
-  const [deleteProjectConfirmLoading, setDeleteProjectConfirmLoading] = useState<boolean>(false);
-  const [resendMailConfirmLoading, setResendMailConfirmLoading] = useState<boolean>(false);
+  const [editReviewerConfirmLoading, setEditReviewerConfirmLoading] =
+    useState<boolean>(false);
+  const [deleteProjectConfirmLoading, setDeleteProjectConfirmLoading] =
+    useState<boolean>(false);
+  const [resendMailConfirmLoading, setResendMailConfirmLoading] =
+    useState<boolean>(false);
   const [sendMailOpen, setSendMailOpen] = useState<boolean>(false);
-  const [sendMailConfirmLoading, setSendMailConfirmLoading] = useState<boolean>(false);
+  const [sendMailConfirmLoading, setSendMailConfirmLoading] =
+    useState<boolean>(false);
 
   const handleEditPage = (id: string, page: number) => {
     setEditPageConfirmLoading(true);
@@ -249,7 +486,8 @@ const ProjectDescription = (props: {
     <Descriptions
       size="middle"
       column={{ xxl: 4, xl: 4, lg: 2, md: 2, sm: 1, xs: 1 }}
-      labelStyle={{ margin: "auto" }}>
+      labelStyle={{ margin: "auto" }}
+    >
       <Descriptions.Item label="项目名称" span={2}>
         <Space direction="vertical">
           {Object.entries(props.record.names).map(([code, name]) => (
@@ -276,7 +514,10 @@ const ProjectDescription = (props: {
               content={
                 <Form
                   layout="inline"
-                  onFinish={(values: any) => handleEditPage(props.record.id as string, values.page)}>
+                  onFinish={(values: any) =>
+                    handleEditPage(props.record.id as string, values.page)
+                  }
+                >
                   <Form.Item initialValue={props.record.page} name="page">
                     <InputNumber />
                   </Form.Item>
@@ -288,7 +529,9 @@ const ProjectDescription = (props: {
                       loading={editPageConfirmLoading}
                     />
                   </Form.Item>
-                </Form>}>
+                </Form>
+              }
+            >
               <Button icon={<EditOutlined />} size="small" />
             </Popover>
           ) : undefined}
@@ -301,7 +544,12 @@ const ProjectDescription = (props: {
             <Popconfirm
               title={`修改为${props.record.urgent ? "非" : ""}加急？`}
               okButtonProps={{ loading: editUrgentConfirmLoading }}
-              onConfirm={() => handleEditUrgent(props.record.id as string, !props.record.urgent)}
+              onConfirm={() =>
+                handleEditUrgent(
+                  props.record.id as string,
+                  !props.record.urgent
+                )
+              }
             >
               <Button icon={<EditOutlined />} size="small" />
             </Popconfirm>
@@ -311,20 +559,29 @@ const ProjectDescription = (props: {
       <Descriptions.Item label="提交审核">
         {`${props.record.author_name} / ${formatTimestamp(props.record.start)}`}
       </Descriptions.Item>
-      <Descriptions.Item label={props.type === "current" ? "审核中" : "完成审核"}>
+      <Descriptions.Item
+        label={props.type === "current" ? "审核中" : "完成审核"}
+      >
         {props.record.reviewer_name}
-        {props.type === "current" ? undefined : ` / ${formatTimestamp(props.record.end)}`}
+        {props.type === "current"
+          ? undefined
+          : ` / ${formatTimestamp(props.record.end)}`}
       </Descriptions.Item>
       <Descriptions.Item label="项目操作" labelStyle={{ margin: "auto" }}>
-        {props.type === "current" ?
-          (<Space wrap>
+        {props.type === "current" ? (
+          <Space wrap>
             <Popconfirm
               title={`重发[报告分配审核]至${props.record.reviewer_name}？`}
               okText="确认"
               cancelText="取消"
               okButtonProps={{ loading: resendMailConfirmLoading }}
-              onConfirm={() => handleResendMail(props.record.id, props.record.reviewer_id)}>
-              <Button icon={<MailOutlined />} size="small">重发邮件</Button>
+              onConfirm={() =>
+                handleResendMail(props.record.id, props.record.reviewer_id)
+              }
+            >
+              <Button icon={<MailOutlined />} size="small">
+                重发邮件
+              </Button>
             </Popconfirm>
             <Popover
               title="选择移交对象"
@@ -334,15 +591,26 @@ const ProjectDescription = (props: {
               content={
                 <Form
                   layout="inline"
-                  onFinish={(values: any) => handleEditReviewer(props.record.id as string, values.user)}>
-                  <Form.Item name="user" rules={[{ required: true, message: "请选择用户" }]}>
+                  onFinish={(values: any) =>
+                    handleEditReviewer(props.record.id as string, values.user)
+                  }
+                >
+                  <Form.Item
+                    name="user"
+                    rules={[{ required: true, message: "请选择用户" }]}
+                  >
                     <Select placeholder="请选择用户">
-                      {props.user.map((u) => (
-                        (u.id !== props.record.reviewer_id && u.id !== props.record.author_id) ?
-                          (<Select.Option key={u.id}>
-                            <Badge status={mapBadgeStatus(u.status)} text={u.name} />
-                          </Select.Option>) : undefined
-                      ))}
+                      {props.users.map((u) =>
+                        u.id !== props.record.reviewer_id &&
+                        u.id !== props.record.author_id ? (
+                          <Select.Option key={u.id}>
+                            <Badge
+                              status={mapBadgeStatus(u.status)}
+                              text={u.name}
+                            />
+                          </Select.Option>
+                        ) : undefined
+                      )}
                     </Select>
                   </Form.Item>
                   <Form.Item>
@@ -356,25 +624,36 @@ const ProjectDescription = (props: {
                 </Form>
               }
             >
-              <Button icon={<SwapOutlined />} size="small">移交审核</Button>
+              <Button icon={<SwapOutlined />} size="small">
+                移交审核
+              </Button>
             </Popover>
             <Popconfirm
               title={`删除项目？`}
               okText="确认"
               cancelText="取消"
               okButtonProps={{ loading: deleteProjectConfirmLoading }}
-              onConfirm={() => handleDeleteProject(props.record.id as string)}>
-              <Button icon={<DeleteOutlined />} size="small">删除项目</Button>
+              onConfirm={() => handleDeleteProject(props.record.id as string)}
+            >
+              <Button icon={<DeleteOutlined />} size="small">
+                删除项目
+              </Button>
             </Popconfirm>
-          </Space>) :
-          (<Space wrap>
+          </Space>
+        ) : (
+          <Space wrap>
             <Popconfirm
               title={`重发[报告完成审核]至${props.record.author_name}？`}
               okText="确认"
               cancelText="取消"
               okButtonProps={{ loading: resendMailConfirmLoading }}
-              onConfirm={() => handleResendMail(props.record.id, props.record.author_id)}>
-              <Button icon={<MailOutlined />} size="small">重发邮件</Button>
+              onConfirm={() =>
+                handleResendMail(props.record.id, props.record.author_id)
+              }
+            >
+              <Button icon={<MailOutlined />} size="small">
+                重发邮件
+              </Button>
             </Popconfirm>
             <Popover
               title="选择发送对象"
@@ -384,10 +663,18 @@ const ProjectDescription = (props: {
               content={
                 <Form
                   layout="inline"
-                  onFinish={(values: any) => handleSendMail(props.record.id as number, values.user)}>
-                  <Form.Item name="user" rules={[{ required: true, message: "请选择用户" }]}>
+                  onFinish={(values: any) =>
+                    handleSendMail(props.record.id as number, values.user)
+                  }
+                >
+                  <Form.Item
+                    name="user"
+                    rules={[{ required: true, message: "请选择用户" }]}
+                  >
                     <Select placeholder="请选择用户">
-                      {props.user.map((u) => (<Select.Option key={u.id}>{u.name}</Select.Option>))}
+                      {props.users.map((u) => (
+                        <Select.Option key={u.id}>{u.name}</Select.Option>
+                      ))}
                     </Select>
                   </Form.Item>
                   <Form.Item>
@@ -401,13 +688,15 @@ const ProjectDescription = (props: {
                 </Form>
               }
             >
-              <Button icon={<MailOutlined />} size="small">获取报告</Button>
+              <Button icon={<MailOutlined />} size="small">
+                获取报告
+              </Button>
             </Popover>
-          </Space>)}
+          </Space>
+        )}
       </Descriptions.Item>
     </Descriptions>
-  )
-}
+  );
+};
 
-
-export { ProjectTable };
+export { ProjectList, ProjectTable };

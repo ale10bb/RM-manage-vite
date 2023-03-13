@@ -1,42 +1,53 @@
 import { useEffect, useState } from "react";
-import { useLocation } from "react-router-dom";
-import { Result, message } from "antd";
+import { useLocation, useNavigate } from "react-router-dom";
+
+import { Result } from "antd";
 import { LoadingOutlined } from "@ant-design/icons";
 
 import axios from "./public/axios-config";
 
-function Auth() {
+const Auth = () => {
   const location = useLocation();
-  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState<boolean>(true);
+  const [errmsg, setErrmsg] = useState<string>(
+    "There are some problems with your operation."
+  );
 
   useEffect(() => {
     const auth = async () => {
+      const token = sessionStorage.getItem("token");
+      if (token) {
+        navigate("/manage");
+        return;
+      }
       const code = new URLSearchParams(location.search).get("code");
       if (code) {
         try {
           const response = await axios.post("/api/auth", { code: code });
           if (response.data.result) {
-            message.error(`认证失败(${response.data.err})`);
+            setErrmsg(response.data.err);
             setLoading(false);
+            navigate("/403");
           } else {
             sessionStorage.setItem("token", response.data.data.token);
-            window.location.replace("/");
+            navigate("/manage");
           }
         } catch (error: any) {
-          message.error(`认证失败(${error.message})`);
+          setErrmsg(error.message);
           setLoading(false);
         }
       } else {
         try {
           const response = await axios.post("/api/redirect");
           if (response.data.result) {
-            message.error(`认证失败(${response.data.err})`);
+            setErrmsg(response.data.err);
             setLoading(false);
           } else {
             window.location.replace(response.data.data.url);
           }
         } catch (error: any) {
-          message.error(`认证失败(${error.message})`);
+          setErrmsg(error.message);
           setLoading(false);
         }
       }
@@ -53,14 +64,20 @@ function Auth() {
           subTitle="Redirecting to OAuth."
         />
       ) : (
-        <Result
-          status="403"
-          title="403"
-          subTitle="Sorry, you are not authorized to access this page."
-        />
+        <Result status="error" title="Auth Failed" subTitle={errmsg} />
       )}
     </>
   );
-}
+};
 
-export default Auth;
+const Unauthorized = () => {
+  return (
+    <Result
+      status="403"
+      title="403"
+      subTitle="Sorry, you are not authorized to access this page."
+    />
+  );
+};
+
+export { Auth, Unauthorized };

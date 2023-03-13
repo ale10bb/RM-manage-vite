@@ -1,52 +1,42 @@
 import { useState, useEffect } from "react";
-import { Breadcrumb, Row, Col, Space } from "antd";
-import { message } from "antd";
-import { Card, Spin } from "antd";
-import { Form, Input, Button } from "antd";
+import { Link } from "react-router-dom";
+
+import { Button } from "antd";
+import { Row, Col, Space } from "antd";
+import { Breadcrumb } from "antd";
+import { Form, Input } from "antd";
+import { Card } from "antd";
+import { message, Spin } from "antd";
 
 import axios from "./public/axios-config";
-
 import { ProjectTable } from "./public/Project";
-import { ProjectItem, UserItem, HistoryTableConfig } from "./public/interfaces"
+import { ProjectItem, HistoryTableConfig } from "./public/interfaces";
 
 const HistoryMain = () => {
   // 表单及结果表格
   const [tableData, setTableData] = useState<{
-    project: Array<ProjectItem>,
-    total: number
+    project: Array<ProjectItem>;
+    total: number;
   }>({ project: [], total: 0 });
   const [tableLoading, setTableLoading] = useState<boolean>(true);
-  const [historyTableConfig, setHistoryTableConfig] = useState<HistoryTableConfig>(
-    { code: "", name: "", company: "", author: "", current: 1, pageSize: 10 }
-  );
-  // 用户列表（用于选择邮件发送对象），history情况下获取所有有效用户
-  const [userData, setUserData] = useState<Array<UserItem>>([]);
-
-  // 启动时后台加载user的数据
-  useEffect(() => {
-    const fetchUser = async () => {
-      axios.post(
-        "/api/user/list",
-        { isReviewer: false }
-      ).then((response) => {
-        if (response.data.result) {
-          message.error(`获取失败(${response.data.err})`);
-        }
-        else {
-          setUserData(response.data.data.user);
-        }
-      }).catch(function (error) {
-        message.error(`获取失败(${error.message})`);
-      });
-    };
-    fetchUser();
-  }, []);
+  const [historyTableConfig, setHistoryTableConfig] =
+    useState<HistoryTableConfig>({
+      code: "",
+      name: "",
+      company: "",
+      author: "",
+      current: 1,
+      pageSize: 10,
+    });
 
   useEffect(() => {
     const fetchHistory = async () => {
       setTableLoading(true);
       try {
-        const response = await axios.post("/api/history/search", historyTableConfig)
+        const response = await axios.post(
+          "/api/history/search",
+          historyTableConfig
+        );
         if (response.data.result) {
           message.error(`获取失败(${response.data.err})`);
         } else {
@@ -57,32 +47,34 @@ const HistoryMain = () => {
         }
       } catch (error: any) {
         message.error(`获取失败(${error.message})`);
-      };
+      }
       setTableLoading(false);
     };
     fetchHistory();
   }, [JSON.stringify(historyTableConfig)]);
 
   const handleSubmit = (values: any) => {
-    setHistoryTableConfig(Object.assign(
-      {},
-      historyTableConfig,
-      values,
-    ));
+    setHistoryTableConfig(Object.assign({}, historyTableConfig, values));
   };
 
-  const handlePageChange = (current: number | undefined, pageSize: number | undefined) => {
-    setHistoryTableConfig(Object.assign(
-      {},
-      historyTableConfig,
-      { current: current, pageSize: pageSize },
-    ));
+  const handlePageChange = (
+    current: number | undefined,
+    pageSize: number | undefined
+  ) => {
+    setHistoryTableConfig(
+      Object.assign({}, historyTableConfig, {
+        current: current,
+        pageSize: pageSize,
+      })
+    );
   };
 
   return (
     <>
-      <Breadcrumb style={{ margin: "16px 0" }}>
-        <Breadcrumb.Item>Manage</Breadcrumb.Item>
+      <Breadcrumb>
+        <Breadcrumb.Item>
+          <Link to={"/manage/dashboard"}>工作台</Link>
+        </Breadcrumb.Item>
         <Breadcrumb.Item>历史项目</Breadcrumb.Item>
       </Breadcrumb>
       <Card style={{ margin: "16px 0" }}>
@@ -108,11 +100,13 @@ const HistoryMain = () => {
                 <Input placeholder="张三三/zhangss" />
               </Form.Item>
             </Col>
-            <Col span={24} style={{ textAlign: 'right' }}>
+            <Col span={24} style={{ textAlign: "right" }}>
               <Form.Item>
                 <Space direction="horizontal" size="middle">
                   <Button htmlType="reset">重置</Button>
-                  <Button type="primary" htmlType="submit">搜索</Button>
+                  <Button type="primary" htmlType="submit">
+                    搜索
+                  </Button>
                 </Space>
               </Form.Item>
             </Col>
@@ -124,8 +118,10 @@ const HistoryMain = () => {
           <ProjectTable
             type="history"
             data={tableData}
-            user={userData}
-            pagination={{ current: historyTableConfig.current, pageSize: historyTableConfig.pageSize }}
+            pagination={{
+              current: historyTableConfig.current,
+              pageSize: historyTableConfig.pageSize,
+            }}
             onPageChange={handlePageChange}
           />
         </Spin>
