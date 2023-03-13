@@ -95,7 +95,7 @@ const Manage = () => {
   const mapRole = (role: 0 | 1 | undefined) => {
     switch (role) {
       case 0:
-        return "普通用户";
+        return "打工人";
       case 1:
         return "审核人";
       default:
@@ -130,7 +130,9 @@ const Manage = () => {
           position: "sticky",
           top: 0,
           zIndex: 1,
+          height: "100%",
           width: "100%",
+          backgroundColor: "white",
         }}
       >
         <Spin spinning={userInfoLoading}>
@@ -141,22 +143,24 @@ const Manage = () => {
             subTitle={mapRole(userInfo.role)}
             tags={mapTag(userInfo.status)}
             extra={[
-              <ManageStatus
-                status={userInfo.status}
-                onChange={() => setRefreshTime(Date.now())}
-              />,
+              userInfo.role ? (
+                <ManageStatus
+                  status={userInfo.status}
+                  onChange={() => setRefreshTime(Date.now())}
+                />
+              ) : undefined,
             ]}
           >
             {userInfo.role === 1
-              ? `你好，打工人，你的分配审核顺位为 ${userInfo.priority} `
-              : undefined}
+              ? `你好，审核人，你的分配顺位为 ${userInfo.priority} `
+              : `你好，打工人，该起床写报告了`}
             {userInfo.role === 1 && userInfo.skipped ? (
               <Tag color="default">跳过一篇</Tag>
             ) : undefined}
           </PageHeader>
         </Spin>
       </Layout.Header>
-      <Layout.Content style={{ margin: "0 20px", marginTop: 64 }}>
+      <Layout.Content style={{ margin: "0 20px", marginTop: 20 }}>
         <Outlet></Outlet>
       </Layout.Content>
       <Layout.Footer></Layout.Footer>
