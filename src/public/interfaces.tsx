@@ -1,12 +1,12 @@
 export interface ProjectItem {
   id: string | number;
-  author_id: string;
-  author_name: string;
-  reviewer_id: string;
-  reviewer_name: string;
+  authorid: string;
+  authorname: string;
+  reviewerid: string;
+  reviewername: string;
   start: number;
   end: number;
-  page: number;
+  pages: number;
   urgent: 0 | 1;
   company: string;
   names: Map<string, string>;

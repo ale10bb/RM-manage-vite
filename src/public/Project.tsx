@@ -165,16 +165,16 @@ const ProjectList = (props: {
             title={Array.from(new Set(Object.values(item.names))).join("、")}
             description={
               <Space>
-                {item.author_id === user_id
+                {item.authorid === user_id
                   ? "已提交审核"
-                  : `撰写人：${item.author_name}`}
+                  : `撰写人：${item.authorname}`}
                 {"|"}
                 <Badge
                   status="processing"
                   text={`审核中${
-                    item.reviewer_id === user_id
+                    item.reviewerid === user_id
                       ? ""
-                      : `：${item.reviewer_name}`
+                      : `：${item.reviewername}`
                   }`}
                 />
               </Space>
@@ -379,13 +379,13 @@ const ProjectTable = (props: {
       />
       <Table.Column
         title="撰写人"
-        dataIndex="author_name"
+        dataIndex="authorname"
         width="15%"
         responsive={["lg"]}
       />
       <Table.Column
         title="审核人"
-        dataIndex="reviewer_name"
+        dataIndex="reviewername"
         width="15%"
         responsive={["lg"]}
       />
@@ -505,7 +505,7 @@ const ProjectDescription = (props: {
       </Descriptions.Item>
       <Descriptions.Item label="报告页数" labelStyle={{ margin: "auto" }}>
         <Space>
-          {props.record.page}
+          {props.record.pages}
           {props.type === "current" ? (
             <Popover
               title="修改页数"
@@ -517,10 +517,10 @@ const ProjectDescription = (props: {
                 <Form
                   layout="inline"
                   onFinish={(values: any) =>
-                    handleEditPage(props.record.id as string, values.page)
+                    handleEditPage(props.record.id as string, values.pages)
                   }
                 >
-                  <Form.Item initialValue={props.record.page} name="page">
+                  <Form.Item initialValue={props.record.pages} name="page">
                     <InputNumber />
                   </Form.Item>
                   <Form.Item>
@@ -559,12 +559,12 @@ const ProjectDescription = (props: {
         </Space>
       </Descriptions.Item>
       <Descriptions.Item label="提交审核">
-        {`${props.record.author_name} / ${formatTimestamp(props.record.start)}`}
+        {`${props.record.authorname} / ${formatTimestamp(props.record.start)}`}
       </Descriptions.Item>
       <Descriptions.Item
         label={props.type === "current" ? "审核中" : "完成审核"}
       >
-        {props.record.reviewer_name}
+        {props.record.reviewername}
         {props.type === "current"
           ? undefined
           : ` / ${formatTimestamp(props.record.end)}`}
@@ -573,12 +573,12 @@ const ProjectDescription = (props: {
         {props.type === "current" ? (
           <Space wrap>
             <Popconfirm
-              title={`重发[报告分配审核]至${props.record.reviewer_name}？`}
+              title={`重发[报告分配审核]至${props.record.reviewername}？`}
               okText="确认"
               cancelText="取消"
               okButtonProps={{ loading: resendMailConfirmLoading }}
               onConfirm={() =>
-                handleResendMail(props.record.id, props.record.reviewer_id)
+                handleResendMail(props.record.id, props.record.reviewerid)
               }
             >
               <Button icon={<MailOutlined />} size="small">
@@ -603,8 +603,8 @@ const ProjectDescription = (props: {
                   >
                     <Select placeholder="请选择用户">
                       {props.users.map((u) =>
-                        u.id !== props.record.reviewer_id &&
-                        u.id !== props.record.author_id ? (
+                        u.id !== props.record.reviewerid &&
+                        u.id !== props.record.authorid ? (
                           <Select.Option key={u.id}>
                             <Badge
                               status={mapBadgeStatus(u.status)}
@@ -645,12 +645,12 @@ const ProjectDescription = (props: {
         ) : (
           <Space wrap>
             <Popconfirm
-              title={`重发[报告完成审核]至${props.record.author_name}？`}
+              title={`重发[报告完成审核]至${props.record.authorname}？`}
               okText="确认"
               cancelText="取消"
               okButtonProps={{ loading: resendMailConfirmLoading }}
               onConfirm={() =>
-                handleResendMail(props.record.id, props.record.author_id)
+                handleResendMail(props.record.id, props.record.authorid)
               }
             >
               <Button icon={<MailOutlined />} size="small">
