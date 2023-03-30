@@ -56,7 +56,7 @@ const Dashboard = () => {
       if (response.data.result) {
         message.error(`执行失败(${response.data.err})`);
       } else {
-        message.success("已加入执行队列");
+        message.success(`处理邮件中 (${response.data.data.entryid})`);
       }
     } catch (error: any) {
       message.error(`执行失败(${error.message})`);

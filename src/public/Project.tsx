@@ -108,7 +108,7 @@ const ProjectList = (props: {
           if (response.data.result) {
             message.error(`邮件发送失败(${response.data.err})`);
           } else {
-            message.success("已加入发送队列");
+            message.success(`发送邮件中 (${response.data.data.entryid})`);
           }
         } catch (error: any) {
           message.error(`邮件发送失败(${error.message})`);
@@ -142,7 +142,7 @@ const ProjectList = (props: {
       if (response.data.result) {
         message.error(`邮件发送失败(${response.data.err})`);
       } else {
-        message.success("已加入发送队列");
+        message.success(`发送邮件中 (${response.data.data.entryid})`);
         props.onDataChange ? props.onDataChange() : undefined;
       }
     } catch (error: any) {
@@ -287,7 +287,7 @@ const ProjectTable = (props: {
           if (response.data.result) {
             message.error(`邮件发送失败(${response.data.err})`);
           } else {
-            message.success("已加入发送队列");
+            message.success(`发送邮件中 (${response.data.data.entryid})`);
           }
         } catch (error: any) {
           message.error(`邮件发送失败(${error.message})`);
@@ -321,7 +321,7 @@ const ProjectTable = (props: {
       if (response.data.result) {
         message.error(`邮件发送失败(${response.data.err})`);
       } else {
-        message.success("已加入发送队列");
+        message.success(`发送邮件中 (${response.data.data.entryid})`);
         props.onDataChange ? props.onDataChange() : undefined;
       }
     } catch (error: any) {
