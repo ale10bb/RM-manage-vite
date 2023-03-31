@@ -62,7 +62,12 @@ const Dashboard = () => {
   }, [refreshTime, JSON.stringify(currentTableConfig)]);
 
   const readNextReviewer = async () => {
-    var testNextReviewer = JSON.parse(sessionStorage.getItem("next"));
+    var next = sessionStorage.getItem("next");
+    if (next === null) {
+      setTimeout(readNextReviewer, 1000);
+      return;
+    }
+    var testNextReviewer = JSON.parse(next);
     if (!!testNextReviewer) {
       setNextReviewer(testNextReviewer);
     } else {

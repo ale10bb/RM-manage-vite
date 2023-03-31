@@ -13,7 +13,7 @@ import axios from "./public/axios-config";
 import { UserItem } from "./public/interfaces";
 
 const UserStatus = (props: {
-  status: 0 | 1 | 2;
+  status: 0 | 1 | 2 | undefined;
   onChange?: () => void | undefined;
 }) => {
   const mapTag = (status: 0 | 1 | 2) => {
