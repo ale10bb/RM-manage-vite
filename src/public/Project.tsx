@@ -507,7 +507,7 @@ const ProjectDescription = (props: {
               <List.Item.Meta
                 avatar={
                   <Tag style={{ margin: "4px 0" }}>
-                    {item.code.slice(9, -4)}
+                    {item.code.split("-")[0].slice(9, -4)}
                   </Tag>
                 }
                 title={item.name}
