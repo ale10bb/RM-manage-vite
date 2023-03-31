@@ -497,19 +497,23 @@ const ProjectDescription = (props: {
         <List
           dataSource={names}
           size="small"
+          itemLayout="vertical"
           style={{ width: "100%" }}
           renderItem={(item) => (
             <List.Item
               key={item.code}
               style={{ padding: "8px 0", width: "100%" }}
             >
-              <Space direction="vertical">
-                <Text>
-                  <Tag>{item.code.slice(9, -4)}</Tag>
-                  {item.name}
-                </Text>
-                <Text type="secondary">{item.code}</Text>
-              </Space>
+              <List.Item.Meta
+                avatar={
+                  <Tag style={{ margin: "4px 0" }}>
+                    {item.code.slice(9, -4)}
+                  </Tag>
+                }
+                title={item.name}
+                description={item.code}
+                style={{ margin: "0 0" }}
+              />
             </List.Item>
           )}
         />
