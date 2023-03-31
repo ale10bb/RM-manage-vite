@@ -111,7 +111,11 @@ const Dashboard = () => {
   return (
     <Row gutter={[16, 16]}>
       <Col span={24}>
-        <Collapse expandIconPosition="end" onChange={onMailCollapseChange}>
+        <Collapse
+          collapsible="icon"
+          expandIconPosition="end"
+          onChange={onMailCollapseChange}
+        >
           <Collapse.Panel
             header={
               <Space>
