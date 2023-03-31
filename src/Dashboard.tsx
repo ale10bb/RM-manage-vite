@@ -1,22 +1,33 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 
-import { Button, Typography } from "antd";
-import { Row, Col, Space } from "antd";
-import { Form, Input, Switch } from "antd";
+import { Button, Space, Typography } from "antd";
+const { Text } = Typography;
+import { Row, Col } from "antd";
+import { Form, Input } from "antd";
 import { Card } from "antd";
 import { message, Spin } from "antd";
+import { Collapse } from "antd";
 import { LoadingOutlined, MailOutlined } from "@ant-design/icons";
 
 import axios from "./public/axios-config";
-import { ProjectItem } from "./public/interfaces";
+import { ProjectItem, UserItem } from "./public/interfaces";
 import { ProjectList } from "./public/Project";
 
 const Dashboard = () => {
   // Card: 邮件处理
   const [mailLoading, setMailLoading] = useState<boolean>(false);
   const [mailForm] = Form.useForm();
-  const [mailAdvanced, setMailAdvanced] = useState<boolean>(false);
+  const [nextReviewer, setNextReviewer] = useState<UserItem>({
+    id: undefined,
+    name: "undefined",
+    role: undefined,
+    status: undefined,
+    pages_diff: undefined,
+    current: undefined,
+    skipped: undefined,
+    priority: undefined,
+  });
   // Card: 我的任务
   const [refreshTime, setRefreshTime] = useState<number>(Date.now());
   const [currentData, setCurrentData] = useState<{
@@ -47,12 +58,22 @@ const Dashboard = () => {
       setCurrentLoading(false);
     };
     fetchCurrent();
+    readNextReviewer();
   }, [refreshTime, JSON.stringify(currentTableConfig)]);
 
-  const handleMail = async (values: { submit: string; finish: string }) => {
+  const readNextReviewer = async () => {
+    var testNextReviewer = JSON.parse(sessionStorage.getItem("next"));
+    if (!!testNextReviewer) {
+      setNextReviewer(testNextReviewer);
+    } else {
+      setTimeout(readNextReviewer, 1000);
+    }
+  };
+
+  const handleMail = async () => {
     setMailLoading(true);
     try {
-      const response = await axios.post("/api/mail", values);
+      const response = await axios.post("/api/mail", mailForm.getFieldsValue());
       if (response.data.result) {
         message.error(`执行失败(${response.data.err})`);
       } else {
@@ -62,11 +83,6 @@ const Dashboard = () => {
       message.error(`执行失败(${error.message})`);
     }
     setMailLoading(false);
-  };
-
-  const handleMailAdvancedSwitch = (checked: boolean) => {
-    mailForm.resetFields();
-    setMailAdvanced(checked);
   };
 
   const handlePageChange = (
@@ -81,59 +97,65 @@ const Dashboard = () => {
     );
   };
 
+  const onMailCollapseChange = (key: string | string[]) => {
+    if (!key || key.length === 0) {
+      mailForm.resetFields();
+    }
+  };
+
   return (
     <Row gutter={[16, 16]}>
       <Col span={24}>
-        <Card title="邮件处理">
-          <Form
-            form={mailForm}
-            layout={mailAdvanced ? "vertical" : "inline"}
-            onFinish={handleMail}
-          >
-            <Form.Item>
-              <Space direction="horizontal">
-                <Button type="primary" htmlType="submit">
-                  {mailLoading ? <LoadingOutlined /> : <MailOutlined />}
-                  执行
-                </Button>
-                <Switch
-                  onChange={(checked) => handleMailAdvancedSwitch(checked)}
-                />
-                <Typography.Text>自定义关键词</Typography.Text>
+        <Collapse expandIconPosition="end" onChange={onMailCollapseChange}>
+          <Collapse.Panel
+            header={
+              <Space>
+                <Button
+                  type="primary"
+                  shape="round"
+                  icon={mailLoading ? <LoadingOutlined /> : <MailOutlined />}
+                  onClick={() => handleMail()}
+                ></Button>
+                <Text>打机器人</Text>
+                <Text type="secondary">
+                  {nextReviewer.id ? `-> ${nextReviewer.name}` : undefined}
+                </Text>
               </Space>
-            </Form.Item>
-            <Form.Item
-              hidden={!mailAdvanced}
-              name="submit"
-              label="提交审核"
-              initialValue=""
-              rules={[
-                {
-                  type: "string",
-                  min: 4,
-                  message: "自定义关键词至少需要4个字符",
-                },
-              ]}
-            >
-              <Input placeholder="[提交审核]" />
-            </Form.Item>
-            <Form.Item
-              hidden={!mailAdvanced}
-              name="finish"
-              label="完成审核"
-              initialValue=""
-              rules={[
-                {
-                  type: "string",
-                  min: 4,
-                  message: "自定义关键词至少需要4个字符",
-                },
-              ]}
-            >
-              <Input placeholder="[完成审核]" />
-            </Form.Item>
-          </Form>
-        </Card>
+            }
+            key={0}
+          >
+            <Form form={mailForm} layout="horizontal">
+              <Form.Item
+                name="submit"
+                label="“提交审核”自定义关键词"
+                initialValue=""
+                rules={[
+                  {
+                    type: "string",
+                    min: 4,
+                    message: "自定义关键词至少需要4个字符",
+                  },
+                ]}
+              >
+                <Input placeholder="[提交审核]" />
+              </Form.Item>
+              <Form.Item
+                name="finish"
+                label="“完成审核”自定义关键词"
+                initialValue=""
+                rules={[
+                  {
+                    type: "string",
+                    min: 4,
+                    message: "自定义关键词至少需要4个字符",
+                  },
+                ]}
+              >
+                <Input placeholder="[完成审核]" />
+              </Form.Item>
+            </Form>
+          </Collapse.Panel>
+        </Collapse>
       </Col>
       <Col span={24}>
         <Spin spinning={currentLoading}>

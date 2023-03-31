@@ -6,16 +6,29 @@ import { PageHeader } from "antd";
 import { Radio } from "antd";
 import { Badge, Popover, Tag } from "antd";
 import { message, Spin } from "antd";
-import { MoreOutlined, UserOutlined } from "@ant-design/icons";
+import { CaretDownOutlined, UserOutlined } from "@ant-design/icons";
 import type { RadioChangeEvent } from "antd";
 
 import axios from "./public/axios-config";
 import { UserItem } from "./public/interfaces";
 
-const ManageStatus = (props: {
-  status: 0 | 1 | 2 | undefined;
+const UserStatus = (props: {
+  status: 0 | 1 | 2;
   onChange?: () => void | undefined;
 }) => {
+  const mapTag = (status: 0 | 1 | 2) => {
+    switch (status) {
+      case 0:
+        return <Tag color="green">空闲</Tag>;
+      case 1:
+        return <Tag color="warning">忙碌</Tag>;
+      case 2:
+        return <Tag color="error">不审</Tag>;
+      default:
+        return undefined;
+    }
+  };
+
   const handleEditStatus = async (value: 0 | 1 | 2) => {
     try {
       const response = await axios.post("/api/user/status", {
@@ -35,31 +48,34 @@ const ManageStatus = (props: {
   return (
     <>
       {props.status !== undefined ? (
-        <Popover
-          placement="bottomRight"
-          content={
-            <Radio.Group
-              defaultValue={props.status}
-              onChange={(e: RadioChangeEvent) =>
-                handleEditStatus(e.target.value)
-              }
-            >
-              <Space direction="vertical">
-                <Radio value={0}>
-                  <Badge status="success" text="空闲" />
-                </Radio>
-                <Radio value={1}>
-                  <Badge status="warning" text="不审加急" />
-                </Radio>
-                <Radio value={2}>
-                  <Badge status="error" text="不审报告" />
-                </Radio>
-              </Space>
-            </Radio.Group>
-          }
-        >
-          <MoreOutlined />
-        </Popover>
+        <Space align="center">
+          {mapTag(props.status)}
+          <Popover
+            placement="bottomRight"
+            content={
+              <Radio.Group
+                defaultValue={props.status}
+                onChange={(e: RadioChangeEvent) =>
+                  handleEditStatus(e.target.value)
+                }
+              >
+                <Space direction="vertical">
+                  <Radio value={0}>
+                    <Badge status="success" text="空闲" />
+                  </Radio>
+                  <Radio value={1}>
+                    <Badge status="warning" text="不审加急" />
+                  </Radio>
+                  <Radio value={2}>
+                    <Badge status="error" text="不审报告" />
+                  </Radio>
+                </Space>
+              </Radio.Group>
+            }
+          >
+            <CaretDownOutlined />
+          </Popover>
+        </Space>
       ) : undefined}
     </>
   );
@@ -79,25 +95,30 @@ const Manage = () => {
   });
   const [userInfoLoading, setUserInfoLoading] = useState<boolean>(true);
 
-  const mapTag = (status: 0 | 1 | 2 | undefined) => {
-    switch (status) {
+  const mapRole = () => {
+    switch (userInfo.role) {
       case 0:
-        return <Tag color="green">空闲</Tag>;
+        return "打工人";
       case 1:
-        return <Tag color="warning">忙碌</Tag>;
-      case 2:
-        return <Tag color="error">不审</Tag>;
+        return "审核人";
       default:
         return undefined;
     }
   };
 
-  const mapRole = (role: 0 | 1 | undefined) => {
-    switch (role) {
+  const mapContent = () => {
+    switch (userInfo.role) {
       case 0:
-        return "打工人";
+        return "你好，打工人，该起床写报告了";
       case 1:
-        return "审核人";
+        return (
+          <>
+            {`你好，审核人，你的分配顺位为 ${
+              userInfo.status != 2 ? userInfo.priority : "-"
+            } `}
+            {userInfo.skipped ? <Tag color="default">跳过一篇</Tag> : undefined}
+          </>
+        );
       default:
         return undefined;
     }
@@ -111,6 +132,8 @@ const Manage = () => {
           message.error(`获取失败(${response.data.err})`);
         } else {
           setUserInfo(response.data.data.user);
+          sessionStorage.setItem("user", JSON.stringify(response.data.data.user));
+          sessionStorage.setItem("next", JSON.stringify(response.data.data.next));
         }
       } catch (error: any) {
         message.error(`获取失败(${error.message})`);
@@ -138,23 +161,17 @@ const Manage = () => {
             ghost={false}
             avatar={{ icon: <UserOutlined /> }}
             title={userInfo.name}
-            subTitle={mapRole(userInfo.role)}
-            tags={mapTag(userInfo.status)}
+            subTitle={mapRole()}
             extra={[
               userInfo.role ? (
-                <ManageStatus
+                <UserStatus
                   status={userInfo.status}
                   onChange={() => setRefreshTime(Date.now())}
                 />
               ) : undefined,
             ]}
           >
-            {userInfo.role === 1
-              ? `你好，审核人，你的分配顺位为 ${userInfo.priority} `
-              : `你好，打工人，该起床写报告了`}
-            {userInfo.role === 1 && userInfo.skipped ? (
-              <Tag color="default">跳过一篇</Tag>
-            ) : undefined}
+            {mapContent()}
           </PageHeader>
         </Spin>
       </Layout.Header>
