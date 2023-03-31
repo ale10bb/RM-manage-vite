@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import jwt_decode from "jwt-decode";
 
-import { Button } from "antd";
+import { Button, Typography } from "antd";
+const { Text } = Typography;
 import { Space } from "antd";
 import { Form, InputNumber, Select } from "antd";
 import { message } from "antd";
@@ -172,9 +173,7 @@ const ProjectList = (props: {
                 <Badge
                   status="processing"
                   text={`审核中${
-                    item.reviewerid === user_id
-                      ? ""
-                      : `：${item.reviewername}`
+                    item.reviewerid === user_id ? "" : `：${item.reviewername}`
                   }`}
                 />
               </Space>
@@ -403,6 +402,10 @@ const ProjectDescription = (props: {
   onDeleteProject: (id: string) => void;
   onSendMail: (id: number | string, user: string) => void;
 }) => {
+  const names = Object.entries(props.record.names).map(([code, name]) => ({
+    code: code,
+    name: name,
+  }));
   // 时间戳格式化
   const formatTimestamp = (unix_timestamp: number) => {
     const d = new Date(unix_timestamp * 1000);
@@ -487,23 +490,52 @@ const ProjectDescription = (props: {
   return (
     <Descriptions
       size="middle"
-      column={{ xxl: 4, xl: 4, lg: 2, md: 2, sm: 1, xs: 1 }}
+      column={{ xxl: 4, xl: 4, lg: 2, md: 2, sm: 2, xs: 2 }}
       labelStyle={{ margin: "auto" }}
     >
-      <Descriptions.Item label="项目名称" span={2}>
-        <Space direction="vertical">
-          {Object.entries(props.record.names).map(([code, name]) => (
-            <div>
-              <Tag color="default">{code}</Tag>
-              {name}
-            </div>
-          ))}
-        </Space>
+      <Descriptions.Item span={2}>
+        <List
+          dataSource={names}
+          size="small"
+          style={{ width: "100%" }}
+          renderItem={(item) => (
+            <List.Item
+              key={item.code}
+              style={{ padding: "8px 0", width: "100%" }}
+            >
+              <Space direction="vertical">
+                <Text>
+                  <Tag>{item.code.slice(9, -4)}</Tag>
+                  {item.name}
+                </Text>
+                <Text type="secondary">{item.code}</Text>
+              </Space>
+            </List.Item>
+          )}
+        />
       </Descriptions.Item>
       <Descriptions.Item label="委托单位" span={2}>
         {props.record.company}
       </Descriptions.Item>
-      <Descriptions.Item label="报告页数" labelStyle={{ margin: "auto" }}>
+      <Descriptions.Item label="撰写人" span={2}>
+        <Space>
+          <Text>{props.record.authorname}</Text>
+          <Text type="secondary">{formatTimestamp(props.record.start)}</Text>
+        </Space>
+      </Descriptions.Item>
+      <Descriptions.Item label="审核人" span={2}>
+        <Space>
+          <Text>{props.record.reviewername}</Text>
+          <Text type="secondary">
+            {props.type === "current"
+              ? `${Math.round(
+                  (Date.now() / 1000 - props.record.start) / 1440
+                )}h`
+              : formatTimestamp(props.record.end)}
+          </Text>
+        </Space>
+      </Descriptions.Item>
+      <Descriptions.Item label="页数">
         <Space>
           {props.record.pages}
           {props.type === "current" ? (
@@ -539,7 +571,7 @@ const ProjectDescription = (props: {
           ) : undefined}
         </Space>
       </Descriptions.Item>
-      <Descriptions.Item label="加急审核" labelStyle={{ margin: "auto" }}>
+      <Descriptions.Item label="加急" span={2}>
         <Space>
           {props.record.urgent ? "是" : "否"}
           {props.type === "current" ? (
@@ -558,18 +590,7 @@ const ProjectDescription = (props: {
           ) : undefined}
         </Space>
       </Descriptions.Item>
-      <Descriptions.Item label="提交审核">
-        {`${props.record.authorname} / ${formatTimestamp(props.record.start)}`}
-      </Descriptions.Item>
-      <Descriptions.Item
-        label={props.type === "current" ? "审核中" : "完成审核"}
-      >
-        {props.record.reviewername}
-        {props.type === "current"
-          ? undefined
-          : ` / ${formatTimestamp(props.record.end)}`}
-      </Descriptions.Item>
-      <Descriptions.Item label="项目操作" labelStyle={{ margin: "auto" }}>
+      <Descriptions.Item label="项目操作" span={2}>
         {props.type === "current" ? (
           <Space wrap>
             <Popconfirm
