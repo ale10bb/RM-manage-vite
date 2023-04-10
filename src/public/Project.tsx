@@ -490,7 +490,7 @@ const ProjectDescription = (props: {
   return (
     <Descriptions
       size="middle"
-      column={{ xxl: 4, xl: 4, lg: 2, md: 2, sm: 2, xs: 2 }}
+      column={2}
       labelStyle={{ margin: "auto" }}
     >
       <Descriptions.Item span={2}>
