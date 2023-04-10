@@ -26,7 +26,6 @@ axios.interceptors.response.use(
     ) {
       sessionStorage.removeItem("token");
       sessionStorage.removeItem("user");
-      sessionStorage.removeItem("next");
       window.location.replace("/auth");
     }
     return Promise.reject(error);

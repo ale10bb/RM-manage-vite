@@ -133,7 +133,6 @@ const Manage = () => {
         } else {
           setUserInfo(response.data.data.user);
           sessionStorage.setItem("user", JSON.stringify(response.data.data.user));
-          sessionStorage.setItem("next", JSON.stringify(response.data.data.next));
         }
       } catch (error: any) {
         message.error(`获取失败(${error.message})`);

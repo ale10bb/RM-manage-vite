@@ -1,14 +1,18 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 
-import { Button, Space, Typography } from "antd";
+import { Button, List, Space, Typography } from "antd";
 const { Text } = Typography;
 import { Row, Col } from "antd";
 import { Form, Input } from "antd";
-import { Card } from "antd";
+import { Card, Tag, Tooltip } from "antd";
 import { message, Spin } from "antd";
 import { Collapse } from "antd";
-import { LoadingOutlined, MailOutlined } from "@ant-design/icons";
+import {
+  EllipsisOutlined,
+  LoadingOutlined,
+  MailOutlined,
+} from "@ant-design/icons";
 
 import axios from "./public/axios-config";
 import { ProjectItem, UserItem } from "./public/interfaces";
@@ -18,16 +22,7 @@ const Dashboard = () => {
   // Card: 邮件处理
   const [mailLoading, setMailLoading] = useState<boolean>(false);
   const [mailForm] = Form.useForm();
-  const [nextReviewer, setNextReviewer] = useState<UserItem>({
-    id: undefined,
-    name: "undefined",
-    role: undefined,
-    status: undefined,
-    pages_diff: undefined,
-    current: undefined,
-    skipped: undefined,
-    priority: undefined,
-  });
+  const [queueData, setQueueData] = useState<Array<UserItem>>([]);
   // Card: 我的任务
   const [refreshTime, setRefreshTime] = useState<number>(Date.now());
   const [currentData, setCurrentData] = useState<{
@@ -39,6 +34,7 @@ const Dashboard = () => {
     current: 1,
     pageSize: 10,
   });
+  const nextReviewer = queueData.length === 0 ? undefined : queueData[0];
 
   useEffect(() => {
     const fetchCurrent = async () => {
@@ -57,23 +53,21 @@ const Dashboard = () => {
       }
       setCurrentLoading(false);
     };
+    const fetchQueue = async () => {
+      try {
+        const response = await axios.post("/api/queue/list", {});
+        if (response.data.result) {
+          message.error(`获取失败(${response.data.err})`);
+        } else {
+          setQueueData(response.data.data.queue);
+        }
+      } catch (error: any) {
+        message.error(`获取失败(${error.message})`);
+      }
+    };
     fetchCurrent();
-    readNextReviewer();
+    fetchQueue();
   }, [refreshTime, JSON.stringify(currentTableConfig)]);
-
-  const readNextReviewer = async () => {
-    var next = sessionStorage.getItem("next");
-    if (next === null) {
-      setTimeout(readNextReviewer, 1000);
-      return;
-    }
-    var testNextReviewer = JSON.parse(next);
-    if (!!testNextReviewer) {
-      setNextReviewer(testNextReviewer);
-    } else {
-      setTimeout(readNextReviewer, 1000);
-    }
-  };
 
   const handleMail = async () => {
     setMailLoading(true);
@@ -126,9 +120,18 @@ const Dashboard = () => {
                   onClick={() => handleMail()}
                 ></Button>
                 <Text>打机器人</Text>
-                <Text type="secondary">
-                  {nextReviewer.id ? `-> ${nextReviewer.name}` : undefined}
-                </Text>
+                <Tooltip
+                  title={<QueueList data={queueData} />}
+                  color="white"
+                  placement="bottomRight"
+                >
+                  {nextReviewer ? (
+                    <Space>
+                      <Text type="secondary">{`-> ${nextReviewer.name}`}</Text>
+                      <EllipsisOutlined />
+                    </Space>
+                  ) : undefined}
+                </Tooltip>
               </Space>
             }
             key={0}
@@ -186,6 +189,35 @@ const Dashboard = () => {
         </Spin>
       </Col>
     </Row>
+  );
+};
+
+const QueueList = (props: { data: Array<UserItem> }) => {
+  const mapTag = (status: 0 | 1 | 2 | undefined) => {
+    switch (status) {
+      case 0:
+        return <Tag color="green">空闲</Tag>;
+      case 1:
+        return <Tag color="warning">忙碌</Tag>;
+      case 2:
+        return <Tag color="error">不审</Tag>;
+      default:
+        return undefined;
+    }
+  };
+  return (
+    <List
+      size="small"
+      dataSource={props.data}
+      renderItem={(item) => (
+        <List.Item key={item.priority}>
+          <Space align="center">
+            {`${item.priority}. ${item.name}`}
+            {mapTag(item.status)}
+          </Space>
+        </List.Item>
+      )}
+    />
   );
 };
 
