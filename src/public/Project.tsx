@@ -594,7 +594,7 @@ const ProjectDescription = (props: {
           ) : undefined}
         </Space>
       </Descriptions.Item>
-      <Descriptions.Item label="项目操作" span={2}>
+      <Descriptions.Item label="操作" span={2}>
         {props.type === "current" ? (
           <Space wrap>
             <Popconfirm
