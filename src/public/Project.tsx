@@ -533,7 +533,7 @@ const ProjectDescription = (props: {
           <Text type="secondary">
             {props.type === "current"
               ? `${Math.round(
-                  (Date.now() / 1000 - props.record.start) / 1440
+                  (Date.now() / 1000 - props.record.start) / 3600
                 )}h`
               : formatTimestamp(props.record.end)}
           </Text>
