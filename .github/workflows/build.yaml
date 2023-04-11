@@ -16,12 +16,11 @@ jobs:
         run: yarn
       - name:  Build 🔧
         run: yarn build
-      - name: Deploy to Server 🚀
-        uses: easingthemes/ssh-deploy@v4
-        env:
-          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-          REMOTE_HOST: ${{ vars.REMOTE_HOST }}
-          REMOTE_USER: ${{ vars.REMOTE_USER }}
-          SOURCE: "dist/"
-          TARGET: ${{ vars.TARGET }}
-          SCRIPT_AFTER: ${{ vars.SCRIPT_AFTER }}
+      - name: Deploy to Alibaba Cloud OSS 🚀
+        uses: fangbinwei/aliyun-oss-website-action@v1
+        with:
+            accessKeyId: ${{ secrets.ACCESS_KEY_ID }}
+            accessKeySecret: ${{ secrets.ACCESS_KEY_SECRET }}
+            endpoint: oss-cn-shanghai.aliyuncs.com
+            folder: dist/
+            bucket: chenql-rm
