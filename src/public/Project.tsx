@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import jwt_decode from "jwt-decode";
 
 import { Button, Typography } from "antd";
 const { Text } = Typography;
@@ -18,7 +17,7 @@ import {
 import { TablePaginationConfig } from "antd/es/table";
 
 import axios from "./axios-config";
-import { ProjectItem, UserItem, MyToken } from "./interfaces";
+import { ProjectItem, UserItem } from "./interfaces";
 
 const ProjectList = (props: {
   type: "current" | "history";
@@ -30,8 +29,8 @@ const ProjectList = (props: {
   ) => void | undefined;
   onDataChange?: () => void | undefined;
 }) => {
-  const token = sessionStorage.getItem("token");
-  const user_id = token ? jwt_decode<MyToken>(token).sub : "";
+  const cachedUser = sessionStorage.getItem("user");
+  const cachedUserID = !!cachedUser ? JSON.parse(cachedUser).id : undefined;
   // 用户列表（用于选择邮件发送对象）
   const [userData, setUserData] = useState<Array<UserItem>>([]);
   useEffect(() => {
@@ -166,14 +165,16 @@ const ProjectList = (props: {
             title={Array.from(new Set(Object.values(item.names))).join("、")}
             description={
               <Space>
-                {item.authorid === user_id
+                {item.authorid === cachedUserID
                   ? "已提交审核"
                   : `撰写人：${item.authorname}`}
                 {"|"}
                 <Badge
                   status="processing"
                   text={`审核中${
-                    item.reviewerid === user_id ? "" : `：${item.reviewername}`
+                    item.reviewerid === cachedUserID
+                      ? ""
+                      : `：${item.reviewername}`
                   }`}
                 />
               </Space>
@@ -488,11 +489,7 @@ const ProjectDescription = (props: {
   };
 
   return (
-    <Descriptions
-      size="middle"
-      column={2}
-      labelStyle={{ margin: "auto" }}
-    >
+    <Descriptions size="middle" column={2} labelStyle={{ margin: "auto" }}>
       <Descriptions.Item span={2}>
         <List
           dataSource={names}

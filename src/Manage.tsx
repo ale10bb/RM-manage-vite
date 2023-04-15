@@ -93,7 +93,7 @@ const Manage = () => {
     skipped: undefined,
     priority: undefined,
   });
-  const [userInfoLoading, setUserInfoLoading] = useState<boolean>(true);
+  const [userInfoLoading, setUserInfoLoading] = useState<boolean>(false);
 
   const mapRole = () => {
     switch (userInfo.role) {
@@ -126,13 +126,22 @@ const Manage = () => {
 
   useEffect(() => {
     const fetchUserInfo = async () => {
+      const cachedUser = sessionStorage.getItem("user");
+      if (!userInfo.id && !!cachedUser) {
+        setUserInfo(JSON.parse(cachedUser));
+        return;
+      }
       try {
+        setUserInfoLoading(true);
         const response = await axios.post("/api/user/info", {});
         if (response.data.result) {
           message.error(`获取失败(${response.data.err})`);
         } else {
           setUserInfo(response.data.data.user);
-          sessionStorage.setItem("user", JSON.stringify(response.data.data.user));
+          sessionStorage.setItem(
+            "user",
+            JSON.stringify(response.data.data.user)
+          );
         }
       } catch (error: any) {
         message.error(`获取失败(${error.message})`);

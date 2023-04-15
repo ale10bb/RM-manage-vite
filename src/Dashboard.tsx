@@ -34,7 +34,16 @@ const Dashboard = () => {
     current: 1,
     pageSize: 10,
   });
-  const nextReviewer = queueData.length === 0 ? undefined : queueData[0];
+  const cachedUser = sessionStorage.getItem("user");
+  const userInfo: UserItem | undefined = !!cachedUser
+    ? JSON.parse(cachedUser)
+    : undefined;
+  const nextReviewer =
+    queueData.length === 0
+      ? undefined
+      : userInfo && userInfo.id === queueData[0].id
+      ? queueData[1]
+      : queueData[0];
 
   useEffect(() => {
     const fetchCurrent = async () => {
