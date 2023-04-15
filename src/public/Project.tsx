@@ -159,6 +159,7 @@ const ProjectList = (props: {
   return (
     <List
       dataSource={props.data.project}
+      itemLayout="vertical"
       renderItem={(item) => (
         <List.Item key={item.id}>
           <List.Item.Meta
