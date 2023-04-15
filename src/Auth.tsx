@@ -16,13 +16,13 @@ const Auth = () => {
 
   useEffect(() => {
     const auth = async () => {
-      const token = sessionStorage.getItem("token");
-      if (token) {
+      if (sessionStorage.getItem("token") !== null) {
         navigate("/manage");
         return;
       }
-      const code = new URLSearchParams(location.search).get("code");
-      if (code) {
+      const myUrlSearchParams = new URLSearchParams(location.search);
+      const code = myUrlSearchParams.get("code");
+      if (!!code) {
         try {
           const response = await axios.post("/api/auth", { code: code });
           if (response.data.result) {
@@ -31,25 +31,57 @@ const Auth = () => {
             navigate("/403");
           } else {
             sessionStorage.setItem("token", response.data.data.token);
+            sessionStorage.setItem(
+              "user",
+              JSON.stringify(response.data.data.user)
+            );
             navigate("/manage");
           }
         } catch (error: any) {
           setErrmsg(error.message);
           setLoading(false);
         }
-      } else {
+        return;
+      }
+      const token = myUrlSearchParams.get("token");
+      if (!!token) {
         try {
-          const response = await axios.post("/api/redirect");
-          if (response.data.result) {
+          const response = await axios.post(
+            "/api/user/info",
+            {},
+            {
+              headers: { Authorization: `Bearer ${token}` },
+            }
+          );
+          if (response.data.err) {
             setErrmsg(response.data.err);
             setLoading(false);
+            navigate("/403");
           } else {
-            window.location.replace(response.data.data.url);
+            sessionStorage.setItem("token", token);
+            sessionStorage.setItem(
+              "user",
+              JSON.stringify(response.data.data.user)
+            );
+            navigate("/manage");
           }
         } catch (error: any) {
           setErrmsg(error.message);
           setLoading(false);
         }
+        return;
+      }
+      try {
+        const response = await axios.post("/api/redirect");
+        if (response.data.result) {
+          setErrmsg(response.data.err);
+          setLoading(false);
+        } else {
+          window.location.replace(response.data.data.url);
+        }
+      } catch (error: any) {
+        setErrmsg(error.message);
+        setLoading(false);
       }
     };
     auth();
@@ -60,24 +92,18 @@ const Auth = () => {
       {loading ? (
         <Result
           icon={<LoadingOutlined />}
-          title="Redirecting"
-          subTitle="Redirecting to OAuth."
+          title="登录中"
+          subTitle="正在请求OAuth，请稍等"
         />
       ) : (
-        <Result status="error" title="Auth Failed" subTitle={errmsg} />
+        <Result status="error" title="登录失败" subTitle={errmsg} />
       )}
     </>
   );
 };
 
 const Unauthorized = () => {
-  return (
-    <Result
-      status="403"
-      title="403"
-      subTitle="Sorry, you are not authorized to access this page."
-    />
-  );
+  return <Result status="403" title="403" subTitle="你无权访问该页面" />;
 };
 
 export { Auth, Unauthorized };
