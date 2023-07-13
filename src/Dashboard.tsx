@@ -38,12 +38,13 @@ const Dashboard = () => {
   const userInfo: UserItem | undefined = !!cachedUser
     ? JSON.parse(cachedUser)
     : undefined;
-  const nextReviewer =
-    queueData.length === 0
-      ? undefined
-      : userInfo && userInfo.id === queueData[0].id
-      ? queueData[1]
-      : queueData[0];
+  const validReviewer = (reviewer: UserItem) => {
+    return (
+      (reviewer.status === 0 || reviewer.status === 1) &&
+      userInfo?.id !== reviewer.id
+    );
+  };
+  const nextReviewer = queueData.find(validReviewer);
 
   useEffect(() => {
     const fetchCurrent = async () => {
