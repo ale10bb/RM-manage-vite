@@ -1,12 +1,17 @@
 import { useState, useEffect } from "react";
 import { Outlet } from "react-router-dom";
 
-import { Layout, Space } from "antd";
+import { List, Layout, Space, Typography } from "antd";
+const { Text } = Typography;
 import { PageHeader } from "antd";
 import { Radio } from "antd";
-import { Badge, Popover, Tag } from "antd";
+import { Badge, Popover, Tag, Tooltip } from "antd";
 import { message, Spin } from "antd";
-import { CaretDownOutlined, UserOutlined } from "@ant-design/icons";
+import {
+  CaretDownOutlined,
+  DownOutlined,
+  UserOutlined,
+} from "@ant-design/icons";
 import type { RadioChangeEvent } from "antd";
 
 import axios from "./public/axios-config";
@@ -81,6 +86,35 @@ const UserStatus = (props: {
   );
 };
 
+const QueueList = (props: { data: Array<UserItem> }) => {
+  const mapTag = (status: 0 | 1 | 2 | undefined) => {
+    switch (status) {
+      case 0:
+        return <Tag color="green">空闲</Tag>;
+      case 1:
+        return <Tag color="warning">忙碌</Tag>;
+      case 2:
+        return <Tag color="error">不审</Tag>;
+      default:
+        return undefined;
+    }
+  };
+  return (
+    <List
+      size="small"
+      dataSource={props.data}
+      renderItem={(item) => (
+        <List.Item key={item.priority}>
+          <Space align="center">
+            {`${item.priority}. ${item.name}`}
+            {mapTag(item.status)}
+          </Space>
+        </List.Item>
+      )}
+    />
+  );
+};
+
 const Manage = () => {
   const [refreshTime, setRefreshTime] = useState<number>(Date.now());
   const [userInfo, setUserInfo] = useState<UserItem>({
@@ -94,6 +128,15 @@ const Manage = () => {
     priority: undefined,
   });
   const [userInfoLoading, setUserInfoLoading] = useState<boolean>(false);
+
+  const [queueData, setQueueData] = useState<Array<UserItem>>([]);
+  const validReviewer = (reviewer: UserItem) => {
+    return (
+      (reviewer.status === 0 || reviewer.status === 1) &&
+      userInfo?.id !== reviewer.id
+    );
+  };
+  const nextReviewer = queueData.find(validReviewer);
 
   const mapRole = () => {
     switch (userInfo.role) {
@@ -109,15 +152,43 @@ const Manage = () => {
   const mapContent = () => {
     switch (userInfo.role) {
       case 0:
-        return "你好，打工人，该起床写报告了";
+        return (
+          <Space>
+            你好，打工人，下一分配顺位是
+            <Tooltip
+              title={<QueueList data={queueData} />}
+              color="white"
+              placement="bottomRight"
+            >
+              {nextReviewer ? (
+                <Text type="secondary">
+                  <Space>
+                    {nextReviewer.name}
+                    <DownOutlined />
+                  </Space>
+                </Text>
+              ) : undefined}
+            </Tooltip>
+          </Space>
+        );
       case 1:
         return (
-          <>
-            {`你好，审核人，你的分配顺位为 ${
-              userInfo.status != 2 ? userInfo.priority : "-"
-            } `}
+          <Space>
+            你好，审核人，你的分配顺位为
+            <Tooltip
+              title={<QueueList data={queueData} />}
+              color="white"
+              placement="bottomRight"
+            >
+              <Text type="secondary">
+                <Space>
+                  {userInfo.status != 2 ? userInfo.priority : "-"}
+                  <DownOutlined />
+                </Space>
+              </Text>
+            </Tooltip>
             {userInfo.skipped ? <Tag color="default">跳过一篇</Tag> : undefined}
-          </>
+          </Space>
         );
       default:
         return undefined;
@@ -132,7 +203,6 @@ const Manage = () => {
         return;
       }
       try {
-        setUserInfoLoading(true);
         const response = await axios.post("/api/user/info", {});
         if (response.data.result) {
           message.error(`获取失败(${response.data.err})`);
@@ -146,9 +216,23 @@ const Manage = () => {
       } catch (error: any) {
         message.error(`获取失败(${error.message})`);
       }
-      setUserInfoLoading(false);
     };
+    const fetchQueue = async () => {
+      try {
+        const response = await axios.post("/api/queue/list", {});
+        if (response.data.result) {
+          message.error(`获取失败(${response.data.err})`);
+        } else {
+          setQueueData(response.data.data.queue);
+        }
+      } catch (error: any) {
+        message.error(`获取失败(${error.message})`);
+      }
+    };
+    setUserInfoLoading(true);
     fetchUserInfo();
+    fetchQueue();
+    setUserInfoLoading(false);
   }, [refreshTime]);
 
   return (
