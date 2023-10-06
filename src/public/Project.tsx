@@ -20,25 +20,18 @@ import axios from "./axios-config";
 import { ProjectItem, UserItem } from "./interfaces";
 
 const ProjectList = (props: {
-  type: "current" | "history";
   data: { project: Array<ProjectItem>; total: number };
   pagination: { current: number | undefined; pageSize: number | undefined };
-  onPageChange?: (
-    current: number | undefined,
-    pageSize: number | undefined
-  ) => void | undefined;
-  onDataChange?: () => void | undefined;
+  onDataChange: () => void | undefined;
 }) => {
   const cachedUser = sessionStorage.getItem("user");
   const cachedUserID = !!cachedUser ? JSON.parse(cachedUser).id : undefined;
-  // 用户列表（用于选择邮件发送对象）
+  // 用户列表（用于选择移交审核对象）
   const [userData, setUserData] = useState<Array<UserItem>>([]);
   useEffect(() => {
     const fetchUser = async () => {
       axios
-        .post("/api/user/list", {
-          isReviewer: props.type === "current" ? true : false,
-        })
+        .post("/api/user/list", { isReviewer: true })
         .then((response) => {
           if (response.data.result) {
             message.error(`获取失败(${response.data.err})`);
@@ -53,8 +46,6 @@ const ProjectList = (props: {
     fetchUser();
   }, []);
 
-  // 目前仅type="current"的项目可修改或删除，因此限定id为string类型
-  // 所有项目均可发送邮件，因此id为string类型(current)或number类型(history)
   const handleEditPage = async (id: string, page: number) => {
     try {
       const response = await axios.post("/api/current/edit", {
@@ -65,7 +56,7 @@ const ProjectList = (props: {
         message.error(`修改失败(${response.data.err})`);
       } else {
         message.success("修改成功");
-        props.onDataChange ? props.onDataChange() : undefined;
+        props.onDataChange();
       }
     } catch (error: any) {
       message.error(`修改失败(${error.message})`);
@@ -100,19 +91,7 @@ const ProjectList = (props: {
       } else {
         message.success("修改成功");
         props.onDataChange ? props.onDataChange() : undefined;
-        try {
-          const response = await axios.post("/api/current/resend", {
-            id: id,
-            to: user,
-          });
-          if (response.data.result) {
-            message.error(`邮件发送失败(${response.data.err})`);
-          } else {
-            message.success(`发送邮件中 (${response.data.data.entryid})`);
-          }
-        } catch (error: any) {
-          message.error(`邮件发送失败(${error.message})`);
-        }
+        handleSendMail(id);
       }
     } catch (error: any) {
       message.error(`修改失败(${error.message})`);
@@ -133,27 +112,17 @@ const ProjectList = (props: {
     }
   };
 
-  const handleSendMail = async (id: number | string, user: string) => {
+  const handleSendMail = async (id: number | string) => {
     try {
-      const response = await axios.post(
-        typeof id === "string" ? "/api/current/resend" : "/api/history/resend",
-        { id: id, to: user }
-      );
+      const response = await axios.post("/api/current/resend", { id: id });
       if (response.data.result) {
         message.error(`邮件发送失败(${response.data.err})`);
       } else {
         message.success(`发送邮件中 (${response.data.data.entryid})`);
-        props.onDataChange ? props.onDataChange() : undefined;
       }
     } catch (error: any) {
       message.error(`邮件发送失败(${error.message})`);
     }
-  };
-
-  const handleTableChange = (pagination: TablePaginationConfig) => {
-    props.onPageChange
-      ? props.onPageChange(pagination.current, pagination.pageSize)
-      : undefined;
   };
 
   return (
@@ -184,7 +153,7 @@ const ProjectList = (props: {
           <Collapse ghost expandIconPosition="start">
             <Collapse.Panel header={<a>详情</a>} key={item.id}>
               <ProjectDescription
-                type={props.type}
+                type={"current"}
                 record={item}
                 users={userData}
                 onEditPage={handleEditPage}
@@ -202,128 +171,21 @@ const ProjectList = (props: {
 };
 
 const ProjectTable = (props: {
-  type: "current" | "history";
   data: { project: Array<ProjectItem>; total: number };
   pagination: { current: number | undefined; pageSize: number | undefined };
   onPageChange?: (
     current: number | undefined,
     pageSize: number | undefined
   ) => void | undefined;
-  onDataChange?: () => void | undefined;
 }) => {
-  // 用户列表（用于选择邮件发送对象）
-  const [userData, setUserData] = useState<Array<UserItem>>([]);
-  useEffect(() => {
-    const fetchUser = async () => {
-      axios
-        .post("/api/user/list", {
-          isReviewer: props.type === "current" ? true : false,
-        })
-        .then((response) => {
-          if (response.data.result) {
-            message.error(`获取失败(${response.data.err})`);
-          } else {
-            setUserData(response.data.data.user);
-          }
-        })
-        .catch(function (error) {
-          message.error(`获取失败(${error.message})`);
-        });
-    };
-    fetchUser();
-  }, []);
-
-  // 目前仅type="current"的项目可修改或删除，因此限定id为string类型
-  // 所有项目均可发送邮件，因此id为string类型(current)或number类型(history)
-  const handleEditPage = async (id: string, page: number) => {
+  // history类型的项目只能向当前用户发送邮件
+  const handleSendMail = async (id: number | string) => {
     try {
-      const response = await axios.post("/api/current/edit", {
-        id: id,
-        page: page,
-      });
-      if (response.data.result) {
-        message.error(`修改失败(${response.data.err})`);
-      } else {
-        message.success("修改成功");
-        props.onDataChange ? props.onDataChange() : undefined;
-      }
-    } catch (error: any) {
-      message.error(`修改失败(${error.message})`);
-    }
-  };
-
-  const handleEditUrgent = async (id: string, urgent: boolean) => {
-    try {
-      const response = await axios.post("/api/current/edit", {
-        id: id,
-        urgent: urgent,
-      });
-      if (response.data.result) {
-        message.error(`修改失败(${response.data.err})`);
-      } else {
-        message.success("修改成功");
-        props.onDataChange ? props.onDataChange() : undefined;
-      }
-    } catch (error: any) {
-      message.error(`修改失败(${error.message})`);
-    }
-  };
-
-  const handleEditReviewer = async (id: string, user: string) => {
-    try {
-      const response = await axios.post("/api/current/edit", {
-        id: id,
-        reviewerID: user,
-      });
-      if (response.data.result) {
-        message.error(`修改失败(${response.data.err})`);
-      } else {
-        message.success("修改成功");
-        props.onDataChange ? props.onDataChange() : undefined;
-        try {
-          const response = await axios.post("/api/current/resend", {
-            id: id,
-            to: user,
-          });
-          if (response.data.result) {
-            message.error(`邮件发送失败(${response.data.err})`);
-          } else {
-            message.success(`发送邮件中 (${response.data.data.entryid})`);
-          }
-        } catch (error: any) {
-          message.error(`邮件发送失败(${error.message})`);
-        }
-      }
-    } catch (error: any) {
-      message.error(`修改失败(${error.message})`);
-    }
-  };
-
-  const handleDeleteProject = async (id: string) => {
-    try {
-      const response = await axios.post("/api/current/delete", { id: id });
-      if (response.data.result) {
-        message.error(`删除失败(${response.data.err})`);
-      } else {
-        message.success("删除成功");
-        props.onDataChange ? props.onDataChange() : undefined;
-      }
-    } catch (error: any) {
-      message.error(`删除失败(${error.message})`);
-    }
-  };
-
-  const handleSendMail = async (id: number | string, user: string) => {
-    try {
-      const response = await axios.post(
-        typeof id === "string" ? "/api/current/resend" : "/api/history/resend",
-        { id: id, to: user }
-      );
+      const response = await axios.post("/api/history/resend", { id: id });
       if (response.data.result) {
         message.error(`邮件发送失败(${response.data.err})`);
       } else {
         message.success(`发送邮件中 (${response.data.data.entryid})`);
-        props.onDataChange ? props.onDataChange() : undefined;
       }
     } catch (error: any) {
       message.error(`邮件发送失败(${error.message})`);
@@ -349,13 +211,9 @@ const ProjectTable = (props: {
       expandable={{
         expandedRowRender: (record) => (
           <ProjectDescription
-            type={props.type}
+            type={"history"}
             record={record}
-            users={userData}
-            onEditPage={handleEditPage}
-            onEditUrgent={handleEditUrgent}
-            onEditReviewer={handleEditReviewer}
-            onDeleteProject={handleDeleteProject}
+            users={[]}
             onSendMail={handleSendMail}
           />
         ),
@@ -398,11 +256,11 @@ const ProjectDescription = (props: {
   type: "current" | "history";
   record: ProjectItem;
   users: Array<UserItem>;
-  onEditPage: (id: string, page: number) => void;
-  onEditUrgent: (id: string, urgent: boolean) => void;
-  onEditReviewer: (id: string, user: string) => void;
-  onDeleteProject: (id: string) => void;
-  onSendMail: (id: number | string, user: string) => void;
+  onEditPage?: (id: string, page: number) => void;
+  onEditUrgent?: (id: string, urgent: boolean) => void;
+  onEditReviewer?: (id: string, user: string) => void;
+  onDeleteProject?: (id: string) => void;
+  onSendMail?: (id: number | string, user?: string) => void;
 }) => {
   const names = Object.entries(props.record.names).map(([code, name]) => ({
     code: code,
@@ -446,11 +304,13 @@ const ProjectDescription = (props: {
     useState<boolean>(false);
   const [resendMailConfirmLoading, setResendMailConfirmLoading] =
     useState<boolean>(false);
-  const [sendMailOpen, setSendMailOpen] = useState<boolean>(false);
   const [sendMailConfirmLoading, setSendMailConfirmLoading] =
     useState<boolean>(false);
 
   const handleEditPage = (id: string, page: number) => {
+    if (!props.onEditPage) {
+      return;
+    }
     setEditPageConfirmLoading(true);
     props.onEditPage(id, page);
     setEditPageConfirmLoading(false);
@@ -458,12 +318,18 @@ const ProjectDescription = (props: {
   };
 
   const handleEditUrgent = (id: string, urgent: boolean) => {
+    if (!props.onEditUrgent) {
+      return;
+    }
     setEditUrgentConfirmLoading(true);
     props.onEditUrgent(id, urgent);
     setEditUrgentConfirmLoading(false);
   };
 
   const handleEditReviewer = (id: string, user: string) => {
+    if (!props.onEditReviewer) {
+      return;
+    }
     setEditReviewerConfirmLoading(true);
     props.onEditReviewer(id, user);
     setEditReviewerConfirmLoading(false);
@@ -471,22 +337,30 @@ const ProjectDescription = (props: {
   };
 
   const handleDeleteProject = (id: string) => {
+    if (!props.onDeleteProject) {
+      return;
+    }
     setDeleteProjectConfirmLoading(true);
     props.onDeleteProject(id);
     setDeleteProjectConfirmLoading(false);
   };
 
   const handleResendMail = (id: number | string, user: string) => {
+    if (!props.onSendMail) {
+      return;
+    }
     setResendMailConfirmLoading(true);
     props.onSendMail(id, user);
     setResendMailConfirmLoading(false);
   };
 
-  const handleSendMail = (id: number, user: string) => {
+  const handleSendMail = (id: number) => {
+    if (!props.onSendMail) {
+      return;
+    }
     setSendMailConfirmLoading(true);
-    props.onSendMail(id, user);
+    props.onSendMail(id);
     setSendMailConfirmLoading(false);
-    setSendMailOpen(false);
   };
 
   return (
@@ -551,7 +425,7 @@ const ProjectDescription = (props: {
                 <Form
                   layout="inline"
                   onFinish={(values: any) =>
-                    handleEditPage(props.record.id as string, values.pages)
+                    handleEditPage(props.record.id as string, values.page)
                   }
                 >
                   <Form.Item initialValue={props.record.pages} name="page">
@@ -668,55 +542,16 @@ const ProjectDescription = (props: {
         ) : (
           <Space wrap>
             <Popconfirm
-              title={`重发[报告完成审核]至${props.record.authorname}？`}
+              title="发送报告至邮箱？"
               okText="确认"
               cancelText="取消"
-              okButtonProps={{ loading: resendMailConfirmLoading }}
-              onConfirm={() =>
-                handleResendMail(props.record.id, props.record.authorid)
-              }
-            >
-              <Button icon={<MailOutlined />} size="small">
-                重发邮件
-              </Button>
-            </Popconfirm>
-            <Popover
-              title="选择发送对象"
-              trigger="click"
-              open={sendMailOpen}
-              onOpenChange={(open) => setSendMailOpen(open)}
-              content={
-                <Form
-                  layout="inline"
-                  onFinish={(values: any) =>
-                    handleSendMail(props.record.id as number, values.user)
-                  }
-                >
-                  <Form.Item
-                    name="user"
-                    rules={[{ required: true, message: "请选择用户" }]}
-                  >
-                    <Select placeholder="请选择用户">
-                      {props.users.map((u) => (
-                        <Select.Option key={u.id}>{u.name}</Select.Option>
-                      ))}
-                    </Select>
-                  </Form.Item>
-                  <Form.Item>
-                    <Button
-                      type="primary"
-                      htmlType="submit"
-                      loading={sendMailConfirmLoading}
-                      icon={<CheckOutlined />}
-                    />
-                  </Form.Item>
-                </Form>
-              }
+              okButtonProps={{ loading: sendMailConfirmLoading }}
+              onConfirm={() => handleSendMail(props.record.id as number)}
             >
               <Button icon={<MailOutlined />} size="small">
                 获取报告
               </Button>
-            </Popover>
+            </Popconfirm>
           </Space>
         )}
       </Descriptions.Item>

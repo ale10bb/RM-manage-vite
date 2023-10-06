@@ -65,18 +65,6 @@ const Dashboard = () => {
     setMailLoading(false);
   };
 
-  const handlePageChange = (
-    current: number | undefined,
-    pageSize: number | undefined
-  ) => {
-    setCurrentTableConfig(
-      Object.assign(currentTableConfig, {
-        current: current,
-        pageSize: pageSize,
-      })
-    );
-  };
-
   const onMailCollapseChange = (key: string | string[]) => {
     if (!key || key.length === 0) {
       mailForm.resetFields();
@@ -145,13 +133,11 @@ const Dashboard = () => {
             extra={<Link to={"/manage/history"}>历史项目</Link>}
           >
             <ProjectList
-              type="current"
               data={currentData}
               pagination={{
                 current: currentTableConfig.current,
                 pageSize: currentTableConfig.pageSize,
               }}
-              onPageChange={handlePageChange}
               onDataChange={() => setRefreshTime(Date.now())}
             />
           </Card>

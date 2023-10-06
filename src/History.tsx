@@ -116,7 +116,6 @@ const HistoryMain = () => {
       <Card>
         <Spin spinning={tableLoading}>
           <ProjectTable
-            type="history"
             data={tableData}
             pagination={{
               current: historyTableConfig.current,
