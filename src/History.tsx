@@ -71,12 +71,12 @@ const HistoryMain = () => {
 
   return (
     <>
-      <Breadcrumb>
-        <Breadcrumb.Item>
-          <Link to={"/manage/dashboard"}>工作台</Link>
-        </Breadcrumb.Item>
-        <Breadcrumb.Item>历史项目</Breadcrumb.Item>
-      </Breadcrumb>
+      <Breadcrumb
+        items={[
+          { href: "/manage/dashboard", title: "工作台" },
+          { title: "历史项目" },
+        ]}
+      />
       <Card style={{ margin: "16px 0" }}>
         <Form layout="inline" onFinish={handleSubmit}>
           <Row gutter={[20, 20]}>
@@ -113,18 +113,16 @@ const HistoryMain = () => {
           </Row>
         </Form>
       </Card>
-      <Card>
-        <Spin spinning={tableLoading}>
-          <ProjectTable
-            data={tableData}
-            pagination={{
-              current: historyTableConfig.current,
-              pageSize: historyTableConfig.pageSize,
-            }}
-            onPageChange={handlePageChange}
-          />
-        </Spin>
-      </Card>
+      <Spin spinning={tableLoading}>
+        <ProjectTable
+          data={tableData}
+          pagination={{
+            current: historyTableConfig.current,
+            pageSize: historyTableConfig.pageSize,
+          }}
+          onPageChange={handlePageChange}
+        />
+      </Spin>
     </>
   );
 };

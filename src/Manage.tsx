@@ -3,7 +3,7 @@ import { Outlet } from "react-router-dom";
 
 import { List, Layout, Space, Typography } from "antd";
 const { Text } = Typography;
-import { PageHeader } from "antd";
+import { PageHeader } from "@ant-design/pro-layout";
 import { Radio } from "antd";
 import { Badge, Popover, Tag, Tooltip } from "antd";
 import { message, Spin } from "antd";
@@ -267,7 +267,7 @@ const Manage = () => {
           </PageHeader>
         </Spin>
       </Layout.Header>
-      <Layout.Content style={{ margin: "0 20px", marginTop: 20 }}>
+      <Layout.Content style={{ marginTop: 20, margin: "20px 20px 0px" }}>
         <Outlet></Outlet>
       </Layout.Content>
       <Layout.Footer></Layout.Footer>
