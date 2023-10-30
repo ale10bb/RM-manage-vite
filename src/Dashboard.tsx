@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 
-import { Button, Space, Typography } from "antd";
-const { Text } = Typography;
+import { Button, Space } from "antd";
 import { Row, Col } from "antd";
 import { Form, Input } from "antd";
 import { Card } from "antd";
@@ -18,6 +17,7 @@ const Dashboard = () => {
   // Card: 邮件处理
   const [mailLoading, setMailLoading] = useState<boolean>(false);
   const [mailForm] = Form.useForm();
+  const [mailCollapseActive, setMailCollapseActive] = useState<number[]>([]);
   // Card: 我的任务
   const [refreshTime, setRefreshTime] = useState<number>(Date.now());
   const [currentData, setCurrentData] = useState<{
@@ -65,66 +65,69 @@ const Dashboard = () => {
     setMailLoading(false);
   };
 
-  const onMailCollapseChange = (key: string | string[]) => {
-    if (!key || key.length === 0) {
-      mailForm.resetFields();
-    }
-  };
-
   return (
     <Row gutter={[16, 16]}>
       <Col span={24}>
-        <Collapse
-          collapsible="icon"
-          expandIconPosition="end"
-          onChange={onMailCollapseChange}
-        >
-          <Collapse.Panel
-            header={
-              <Space>
-                <Button
-                  type="primary"
-                  shape="round"
-                  icon={mailLoading ? <LoadingOutlined /> : <MailOutlined />}
-                  onClick={() => handleMail()}
-                ></Button>
-                <Text>打机器人</Text>
-              </Space>
-            }
-            key={0}
-          >
-            <Form form={mailForm} layout="horizontal">
-              <Form.Item
-                name="submit"
-                label="“提交审核”自定义关键词"
-                initialValue=""
-                rules={[
-                  {
-                    type: "string",
-                    min: 4,
-                    message: "自定义关键词至少需要4个字符",
-                  },
-                ]}
-              >
-                <Input placeholder="[提交审核]" />
-              </Form.Item>
-              <Form.Item
-                name="finish"
-                label="“完成审核”自定义关键词"
-                initialValue=""
-                rules={[
-                  {
-                    type: "string",
-                    min: 4,
-                    message: "自定义关键词至少需要4个字符",
-                  },
-                ]}
-              >
-                <Input placeholder="[完成审核]" />
-              </Form.Item>
-            </Form>
-          </Collapse.Panel>
-        </Collapse>
+        <Card bodyStyle={{ padding: "8px" }}>
+          <Collapse
+            ghost
+            collapsible="icon"
+            activeKey={mailCollapseActive}
+            items={[
+              {
+                key: 1,
+                label: (
+                  <Space size="middle">
+                    <Button
+                      type="primary"
+                      shape="round"
+                      icon={
+                        mailLoading ? <LoadingOutlined /> : <MailOutlined />
+                      }
+                      onClick={() => handleMail()}
+                    >
+                      打机器人
+                    </Button>
+                    <a onClick={() => setMailCollapseActive([1])}>高级</a>
+                  </Space>
+                ),
+                children: (
+                  <Form form={mailForm} layout="horizontal">
+                    <Form.Item
+                      name="submit"
+                      label="“提交审核”自定义关键词"
+                      initialValue=""
+                      rules={[
+                        {
+                          type: "string",
+                          min: 4,
+                          message: "自定义关键词至少需要4个字符",
+                        },
+                      ]}
+                    >
+                      <Input placeholder="[提交审核]" />
+                    </Form.Item>
+                    <Form.Item
+                      name="finish"
+                      label="“完成审核”自定义关键词"
+                      initialValue=""
+                      rules={[
+                        {
+                          type: "string",
+                          min: 4,
+                          message: "自定义关键词至少需要4个字符",
+                        },
+                      ]}
+                    >
+                      <Input placeholder="[完成审核]" />
+                    </Form.Item>
+                  </Form>
+                ),
+                showArrow: false,
+              },
+            ]}
+          ></Collapse>
+        </Card>
       </Col>
       <Col span={24}>
         <Spin spinning={currentLoading}>
