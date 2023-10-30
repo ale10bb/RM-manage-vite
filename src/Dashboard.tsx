@@ -131,6 +131,7 @@ const Dashboard = () => {
           <Card
             title="我的任务"
             extra={<Link to={"/manage/history"}>历史项目</Link>}
+            bodyStyle={{ padding: "8px" }}
           >
             <ProjectList
               data={currentData}

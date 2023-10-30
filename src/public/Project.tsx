@@ -131,39 +131,50 @@ const ProjectList = (props: {
       itemLayout="vertical"
       renderItem={(item) => (
         <List.Item key={item.id}>
-          <List.Item.Meta
-            title={Array.from(new Set(Object.values(item.names))).join("、")}
-            description={
-              <Space>
-                {item.authorid === cachedUserID
-                  ? "已提交审核"
-                  : `撰写人：${item.authorname}`}
-                {"|"}
-                <Badge
-                  status="processing"
-                  text={`审核中${
-                    item.reviewerid === cachedUserID
-                      ? ""
-                      : `：${item.reviewername}`
-                  }`}
-                />
-              </Space>
-            }
-          />
-          <Collapse ghost expandIconPosition="start">
-            <Collapse.Panel header={<a>详情</a>} key={item.id}>
-              <ProjectDescription
-                type={"current"}
-                record={item}
-                users={userData}
-                onEditPage={handleEditPage}
-                onEditUrgent={handleEditUrgent}
-                onEditReviewer={handleEditReviewer}
-                onDeleteProject={handleDeleteProject}
-                onSendMail={handleSendMail}
-              />
-            </Collapse.Panel>
-          </Collapse>
+          <Collapse
+            ghost
+            expandIconPosition="start"
+            items={[
+              {
+                key: "1",
+                label: (
+                  <List.Item.Meta
+                    title={Array.from(new Set(Object.values(item.names))).join(
+                      "、"
+                    )}
+                    description={
+                      <Space>
+                        {item.authorid === cachedUserID
+                          ? "已提交审核"
+                          : `撰写人：${item.authorname}`}
+                        {"|"}
+                        <Badge
+                          status="processing"
+                          text={`审核中${
+                            item.reviewerid === cachedUserID
+                              ? ""
+                              : `：${item.reviewername}`
+                          }`}
+                        />
+                      </Space>
+                    }
+                  />
+                ),
+                children: (
+                  <ProjectDescription
+                    type={"current"}
+                    record={item}
+                    users={userData}
+                    onEditPage={handleEditPage}
+                    onEditUrgent={handleEditUrgent}
+                    onEditReviewer={handleEditReviewer}
+                    onDeleteProject={handleDeleteProject}
+                    onSendMail={handleSendMail}
+                  />
+                ),
+              },
+            ]}
+          ></Collapse>
         </List.Item>
       )}
     />
