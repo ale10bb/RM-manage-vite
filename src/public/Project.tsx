@@ -464,6 +464,8 @@ const ProjectDescription = (props: {
           {props.type === "current" ? (
             <Popconfirm
               title={`修改为${props.record.urgent ? "非" : ""}加急？`}
+              okText="确认"
+              cancelText="取消"
               okButtonProps={{ loading: editUrgentConfirmLoading }}
               onConfirm={() =>
                 handleEditUrgent(
