@@ -17,7 +17,7 @@ const Dashboard = () => {
   // Card: 邮件处理
   const [mailLoading, setMailLoading] = useState<boolean>(false);
   const [mailForm] = Form.useForm();
-  const [mailCollapseActive, setMailCollapseActive] = useState<number[]>([]);
+  const [mailAdvancedOpen, setMailAdvancedOpen] = useState<boolean>(false);
   // Card: 我的任务
   const [refreshTime, setRefreshTime] = useState<number>(Date.now());
   const [currentData, setCurrentData] = useState<{
@@ -72,7 +72,7 @@ const Dashboard = () => {
           <Collapse
             ghost
             collapsible="icon"
-            activeKey={mailCollapseActive}
+            activeKey={mailAdvancedOpen ? [1] : []}
             items={[
               {
                 key: 1,
@@ -88,7 +88,18 @@ const Dashboard = () => {
                     >
                       打机器人
                     </Button>
-                    <a onClick={() => setMailCollapseActive([1])}>高级</a>
+                    {mailAdvancedOpen ? (
+                      <a onClick={() => setMailAdvancedOpen(false)}>隐藏</a>
+                    ) : (
+                      <a
+                        onClick={() => {
+                          mailForm.resetFields();
+                          setMailAdvancedOpen(true);
+                        }}
+                      >
+                        高级
+                      </a>
+                    )}
                   </Space>
                 ),
                 children: (
