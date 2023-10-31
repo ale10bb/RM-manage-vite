@@ -107,7 +107,9 @@ const QueueList = (props: { data: Array<UserItem> }) => {
         <List.Item key={item.priority}>
           <Space align="center">
             {`${item.priority}. ${item.name}`}
-            {mapTag(item.status)}
+            <Badge count={item.current} size="small">
+              {mapTag(item.status)}
+            </Badge>
           </Space>
         </List.Item>
       )}
