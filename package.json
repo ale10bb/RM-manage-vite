@@ -10,12 +10,12 @@
   },
   "dependencies": {
     "@ant-design/pro-components": "^2.6.34",
-    "antd": "^5.10.2",
+    "antd": "^5.10.3",
     "axios": "^1.6.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-router": "^6.17.0",
-    "react-router-dom": "^6.17.0"
+    "react-router": "^6.18.0",
+    "react-router-dom": "^6.18.0"
   },
   "devDependencies": {
     "@types/react": "^18.2.33",
